@@ -1,0 +1,3 @@
+
+class ThirdServiceException(Exception):
+    pass
