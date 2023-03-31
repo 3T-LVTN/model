@@ -1,5 +1,6 @@
 from app.adapter.base import BaseAdapter
-from app.middleware.router.dto import WebhookConfig, ErrorMessage, INFO_COLOR, Payload
+from app.adapter.dto.slack_dto import WebhookConfig, ErrorMessage, INFO_COLOR, Payload
+from app.config import env_var
 
 
 class SlackMessageAdapter(BaseAdapter):
@@ -28,3 +29,10 @@ class SlackMessageAdapter(BaseAdapter):
         )
 
         self.post(payload.json())
+
+
+cfg = WebhookConfig(
+    env=env_var.ENVIRONMENT,
+    url=env_var.SLACK_WEBHOOK_URL,
+)
+slack_adapter = SlackMessageAdapter(cfg=cfg)

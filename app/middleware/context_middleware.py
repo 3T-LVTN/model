@@ -19,6 +19,8 @@ class CustomContextMiddleware(ContextMiddleware):
         # if scheme.lower() != "bearer":
         #     return dict()
 
-        return Context(
-            method=request.method
-        ).__dict__
+        return {
+            "ctx": Context(
+                method=request.method
+            )
+        }

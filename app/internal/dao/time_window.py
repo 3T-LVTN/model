@@ -13,4 +13,4 @@ class TimeWindow(BaseModel):
     start_ts: int = Column(Integer)
     end_ts: int = Column(Integer)
 
-    UniqueConstraint(start_ts, end_ts, sliding_size)
+    UniqueConstraint("start_ts", "end_ts", "sliding_size")

@@ -50,7 +50,7 @@ def make_celery():
         sender.add_periodic_task(10.0, task_crawl_data.s(), name='crawl_data')
 
     celery.autodiscover_tasks(['app.internal.celery.tasks.task_crawl_data'])
-
+    celery.autodiscover_tasks(['app.internal.celery.tasks.task_train_model'])
     # For config schedule cronjob
     celery.conf.update(
         beat_schedule={

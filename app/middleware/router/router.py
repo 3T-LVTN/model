@@ -6,10 +6,9 @@ from fastapi import APIRouter
 from fastapi.routing import APIRoute
 from fastapi import Request, Response
 from starlette.responses import UJSONResponse
-from app.middleware.router.slack_adapter import SlackMessageAdapter, WebhookConfig
-from app.middleware.router.dto import Attachment, ErrorMessage
+from app.adapter.dto.slack_dto import Attachment, ErrorMessage
 from app.internal.dao import db
-from app.config import env_var
+from app.adapter.slack_adapter import slack_adapter
 DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 
@@ -26,13 +25,6 @@ class ApiException(ErrorMessage):
 
     def get_message(self) -> str:
         return f"encounter {self.error.__str__()}"
-
-
-cfg = WebhookConfig(
-    env=env_var.ENVIRONMENT,
-    url=env_var.SLACK_WEBHOOK_URL,
-)
-api_error_notify = SlackMessageAdapter(cfg=cfg)
 
 
 class CustomAPIRoute(APIRoute):
@@ -55,7 +47,7 @@ class CustomAPIRoute(APIRoute):
 
                 if e:
                     err = ApiException(error=e, body=req_body, params=request.query_params)
-                    api_error_notify.send_error(error=err)
+                    slack_adapter.send_error(error=err)
 
                 db_session.close()
         return custom_route_handler

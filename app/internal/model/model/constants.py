@@ -27,4 +27,4 @@ PREDICTED_VAR = "predicted_var"
 
 FORMULA = f"{PREDICTED_VAR} ~ {' + '.join(NORMAL_COLUMN)} + (1|{RANDOM_FACTOR_COLUMN})"
 
-OUTPUT_MODEL_FOLDER = "app/internal/model/output_model"
+OUTPUT_MODEL_FOLDER = "app/internal/model/model_train_result/model_pkl"
