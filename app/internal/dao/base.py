@@ -26,31 +26,26 @@ class Page(Generic[T]):
 @as_declarative()
 class Base:
     __abstract__ = True
-    __name__: str
     __allow_unmapped__ = True
-
-    # Generate __tablename__ automatically
-    @declared_attr
-    def __tablename__(cls) -> str:
-        return cls.__name__.lower()
 
     def as_dict(self) -> dict:
         return {c.key: getattr(self, c.key) for c in inspect(self).mapper.column_attrs}
-
-    def __init__(self, **kwargs) -> None:
-        for key, arg in kwargs.items():
-            if not key.startswith('_') and hasattr(self, key):
-                setattr(self, key, arg)
 
 
 class BaseModel(Base):
     __abstract__ = True
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    created_at = Column(DateTime, default=datetime.now)
-    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+    created_at = Column(Integer, default=lambda: int(datetime.now().timestamp()))
+    updated_at = Column(
+        Integer, default=lambda: int(datetime.now().timestamp()),
+        onupdate=lambda: int(datetime.now().timestamp()))
 
-    def __init__(self, created_by: str = None, updated_by: str = None, **kwargs):
-        super().__init__(**kwargs)
-        self.created_by: str = created_by
-        self.updated_by: str = updated_by
+    def __init__(self,  **kwargs):
+        for key, arg in kwargs.items():
+            if not key.startswith('_') and hasattr(self, key):
+                if isinstance(arg, datetime):
+                    arg = int(arg.timestamp())
+                if isinstance(arg, str) and len(arg) == 0:
+                    arg = None
+                setattr(self, key, arg)

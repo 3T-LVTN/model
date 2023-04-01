@@ -1,15 +1,20 @@
-from fastapi_camelcase import CamelModel
+import json
+from typing import List, Tuple, Dict
+from http import HTTPStatus
+from datetime import datetime
+import uuid
+from fastapi_camelcase import CamelModel, BaseModel
 from typing import Any, Union
-
+from fastapi.encoders import jsonable_encoder
 import requests
 
 from app.common.constant import SUCCESS_STATUS_CODE
 
 
 class BaseResponse(CamelModel):
-    code: int
-    message: str
-    data: Any
+    code: int = None
+    message: str = None
+    data: Any = None
 
     class Config:
         arbitrary_types_allowed = True
@@ -42,10 +47,13 @@ class BaseAdapter:
             resp.data = third_party_resp.content
         return resp
 
-    def post(self, end_point: str = "", payload: Union[dict[Any, Any], list[Any]] = None) -> BaseResponse:
+    def post(self, end_point: str = "", payload: BaseModel = None) -> BaseResponse:
         url = self._to_api_url(end_point)
-        return self._get_response(requests.post(url=url, json=payload))
+        headers = {'Content-type': 'application/json'}
 
-    def get(self, end_point: str = "", params: Union[list[Any], dict[Any, Any]] = None) -> BaseResponse:
+        return self._get_response(requests.post(url=url, json=jsonable_encoder(payload), headers=headers))
+
+    def get(self, end_point: str = "", params: BaseModel = None) -> BaseResponse:
         url = self._to_api_url(end_point)
-        return self._get_response(requests.get(url=url, params=params, stream=True))
+
+        return self._get_response(requests.get(url=url, params=jsonable_encoder(params), stream=True))

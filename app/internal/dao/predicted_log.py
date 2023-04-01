@@ -13,7 +13,7 @@ class PredictedLog(BaseModel):
     for VOVE project, this table is number of mosquitto we aggregate data from specific location at specific timewindow
     In order to reuse it for another type of project i think naming it as predicted var is better
     '''
-    __name__ = "predicted_var"
+    __tablename__ = "predicted_log"
 
     # foreignkey
     location_id: int = Column(Integer, ForeignKey("location.id"))
@@ -24,7 +24,7 @@ class PredictedLog(BaseModel):
     model_file_path: str = Column(String(50))
 
     ######## relationship ############
-    location: Mapped['Location'] = relationship("Location", foreign_keys=[location_id])
-    time_window: Mapped['TimeWindow'] = relationship("TimeWindow", foreign_keys=[time_window_id])
+    location: Mapped['Location'] = relationship("Location", foreign_keys=[location_id], viewonly=True)
+    time_window: Mapped['TimeWindow'] = relationship("TimeWindow", foreign_keys=[time_window_id], viewonly=True)
 
     UniqueConstraint("location_id", "time_window_id")

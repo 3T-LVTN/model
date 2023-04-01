@@ -48,6 +48,10 @@ def datetime_to_str(inp_dt: datetime, format: str) -> str:
     return datetime.strftime(inp_dt, format)
 
 
+def datetime_to_ts(inp_dt: datetime) -> int:
+    return int(inp_dt.timestamp())
+
+
 def ts_to_str(inp_ts: int, format: str) -> str:
     return datetime_to_str(ts_to_datetime(inp_ts), format)
 

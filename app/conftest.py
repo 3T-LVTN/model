@@ -1,11 +1,12 @@
 import os
 import socket
-from typing import Generator
+from typing import Callable, Generator
 from unittest.mock import patch
 import pytest
 from redis import Redis
 import sqlalchemy.engine
 from app.config import env_var
+from app.internal.dao.base import Base
 from app.internal.dao.db import get_db_session
 from app.main import app, celery_app
 from sqlalchemy import create_engine, text
@@ -22,7 +23,7 @@ def get_random_free_port():
     return sock.getsockname()[1]
 
 
-def init_db_container() -> sqlalchemy.engine.Engine:
+def init_db_container() -> PostgresContainer:
     db_container = PostgresContainer(
         'postgres:latest',
         user=env_var.DB_USERNAME,
@@ -34,11 +35,10 @@ def init_db_container() -> sqlalchemy.engine.Engine:
     db_container.with_bind_ports(env_var.DB_PORT, get_random_free_port())  # bind db port with other port to run test
     db_container.start()
 
-    db_uri = db_container.get_connection_url()
-    return create_engine(db_uri)
+    return db_container
 
 
-def init_redis() -> Redis:
+def init_redis() -> str:
     # init redis container for celery
     redis_container = RedisContainer()
     redis_container.get_container_host_ip = lambda: 'localhost'
@@ -52,19 +52,26 @@ def init_redis() -> Redis:
 #     init_db_container()
 
 
-def get_test_db_session(test_engine: sqlalchemy.engine.Engine) -> Generator[session.Session, None, None]:
-    db_test_session_maker = sessionmaker(
-        autocommit=False, autoflush=False, bind=test_engine
-    )
-    db_test_session = db_test_session_maker()
-    try:
-        yield db_test_session
-    finally:
-        db_test_session.close()
+def get_test_db_session(test_engine: sqlalchemy.engine.Engine) -> Callable[[], Generator[session.Session, None, None]]:
+    def get_db_session():
+        db_test_session_maker = sessionmaker(
+            autocommit=False, autoflush=False, bind=test_engine
+        )
+        db_test_session = db_test_session_maker()
+        try:
+            yield db_test_session
+        finally:
+            db_test_session.close()
+    return get_db_session
+
+
+db_container = init_db_container()
+db_uri: str = db_container.get_connection_url()
+test_engine = create_engine(db_uri)
 
 
 @pytest.fixture(scope="session", autouse=True)
-def create_test_database(db_uri: str):
+def create_test_database():
     """
     Create a clean database on every test case.
 
@@ -74,6 +81,7 @@ def create_test_database(db_uri: str):
     if database_exists(db_uri):
         drop_database(db_uri)
     create_database(db_uri)  # Create the test database.
+    Base.metadata.create_all(test_engine)  # Create the tables.
     # run_sql('app\\tests\\scripts\\mock_common_data_test.sql')  # Mock common data test
     # run_sql('app\\tests\\scripts\\mock_common_data_test.sql')  # Mock common data test
     from app.adapter.base import BaseAdapter, BaseResponse
@@ -83,7 +91,7 @@ def create_test_database(db_uri: str):
     mock_adapter.start()
     app.dependency_overrides[
         get_db_session
-    ] = get_test_db_session  # Mock the Database Dependency
+    ] = get_test_db_session(test_engine)  # Mock the Database Dependency
     yield  # Run the tests.
     drop_database(db_uri)  # Drop the test database.
 
@@ -101,25 +109,32 @@ def create_test_database(db_uri: str):
 #     db_mock.stop()
 #     db_session_test.close()
 
+# @pytest.fixture(scope="session", autouse=True)
+# def create_test_celery():
+#     redis_url = init_redis()
 
-@pytest.fixture(scope="session", autouse=True)
-def create_test_celery():
-    redis_client = init_redis()
+#     # redis_conn_kw = redis_client.get_connection_kwargs()
+#     # redis_host = redis_conn_kw.get("host")
+#     # redis_port = redis_conn_kw.get("port")
+#     # redis_url = f"redis://{redis_host}:{redis_port}"
 
-    redis_conn_kw = redis_client.get_connection_kwargs()
-    redis_host = redis_conn_kw.get("host")
-    redis_port = redis_conn_kw.get("port")
-    redis_url = f"redis://{redis_host}:{redis_port}"
+#     celery_app.conf.update(task_always_eager=True,
+#                            broker_url=redis_url,
+#                            result_backend=redis_url)
 
-    celery_app.conf.update(task_always_eager=True,
-                           broker_url=redis_url,
-                           result_backend=redis_url)
+
+@pytest.fixture(scope='session')
+def celery_config():
+    return {
+        'broker_url': 'amqp://',
+        'result_backend': 'redis://'
+    }
 
 
 @pytest.fixture()
 def db_session_test():
     """Returns an sqlalchemy session, and after the test tears down everything properly."""
-    test_engine = init_db_container()
+
     db_session_maker = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
     db_session_test = db_session_maker()
 

@@ -22,7 +22,7 @@ class BaseRepo(Generic[ModelType]):
 
         if query is None:
             return session.query(self.model).all()
-        return query.select_from(self.model).all()
+        return query.all()
 
     @staticmethod
     def paginate(

@@ -37,8 +37,15 @@ class WeatherDataLoader(DataLoader):
     def get_train_data(self, db_session: Session, *args,  **kwargs) -> pd.DataFrame:
         return self._get_data(db_session, *args, **kwargs)
 
+    def load_predicted_var(self, db_session, time_window_id: int) -> pd.DataFrame:
+        ...
+
     def _get_data(self, db_session: Session, time_window_id: int, *args,  **kwargs) -> pd.DataFrame:
-        return self.load_weather_log_from_db(db_session, time_window_id)
+        weather_log = self.load_weather_log_from_db(db_session, time_window_id)
+        predicted_var = self.load_predicted_var(db_session, time_window_id)
+        return weather_log.join(
+            predicted_var, on=["time_window_id", "location_id"], how="inner",
+        )
 
     def get_input_data(self, db_session: Session,  longitude: float, lattitude: float, *args, **kwargs) -> pd.DataFrame:
         location_df = pd.read_sql_query(

@@ -1,5 +1,5 @@
 from typing import TYPE_CHECKING
-from sqlalchemy import Column, Integer, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, Integer, ForeignKey, Float, String, UniqueConstraint
 from sqlalchemy.orm import relationship, Mapped
 
 from app.internal.dao.base import BaseModel
@@ -9,41 +9,34 @@ if TYPE_CHECKING:
 
 
 class WeatherLog(BaseModel):
-    __name__ = "weather_log"
+    __tablename__ = "weather_log"
 
     # foreignkey
     location_id: int = Column(Integer, ForeignKey("location.id"))
     time_window_id: int = Column(Integer, ForeignKey("time_window.id"))
 
     # data column
-    address: str
-    date_time: str
-    minimum_temperature: str
-    maximum_temperature: str
-    temperature: str
-    dew_point: str
-    relative_humidity: str
-    heat_index: str
-    wind_speed: str
-    wind_gust: str
-    wind_direction: str
-    wind_chill: str
-    precipitation: str
-    precipitation_cover: str
-    snow_depth: str
-    visibility: str
-    cloud_cover: str
-    sea_level_pressure: str
-    weather_type: str
-    latitude: str
-    longitude: str
-    resolved_address: str
-    name: str
-    info: str
-    conditions: str
+    date_time: int = Column(Integer)  # timestamp
+    minimum_temperature = Column(Float)
+    maximum_temperature = Column(Float)
+    temperature = Column(Float)
+    dew_point = Column(Float)
+    relative_humidity = Column(Float)
+    heat_index = Column(Float)
+    wind_speed = Column(Float)
+    wind_gust = Column(Float)
+    wind_direction = Column(String(50))
+    wind_chill = Column(Float)
+    precipitation = Column(Float)
+    precipitation_cover = Column(Float)
+    snow_depth = Column(Float)
+    visibility = Column(Float)
+    cloud_cover = Column(Float)
+    sea_level_pressure = Column(Float)
+    weather_type = Column(String(50))
+    info = Column(String(50))
+    conditions = Column(String(50))
 
     ######## relationship ############
-    location: Mapped['Location'] = relationship("Location", foreign_keys=[location_id])
-    time_window: Mapped['TimeWindow'] = relationship("TimeWindow", foreign_keys=[time_window_id])
-
-    UniqueConstraint("location_id", "time_window_id")
+    location: Mapped['Location'] = relationship(viewonly=True)
+    time_window: Mapped['TimeWindow'] = relationship(viewonly=True)
