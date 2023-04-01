@@ -30,7 +30,6 @@ def get_application() -> FastAPI:
     # application.add_exception_handler(
     #     RequestValidationError, validation_exception_handler
     # )
-
     return app
 
 

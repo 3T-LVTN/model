@@ -16,8 +16,8 @@ DB_URI: str = f'postgresql://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}:' \
 
 
 # REDIS
-REDIS_HOST: str = os.getenv("CELERY_HOST", default="localhost")
-REDIS_PORT: str = os.getenv("CELERY_PORT", default="6379")
+REDIS_HOST: str = os.getenv("REDIS_HOST", default="localhost")
+REDIS_PORT: str = os.getenv("REDIS_PORT", default="6379")
 REDIS_URL: str = f"redis://{REDIS_HOST}:{REDIS_PORT}"
 CACHE_OUTDATED_TIME: int = int(os.getenv('CALCULATION_CONFIG_CACHE_OUTDATED_TIME', default=600))
 # CELERY

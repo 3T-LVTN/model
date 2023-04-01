@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from sqlalchemy import BigInteger, Column, DateTime, Integer, String, inspect
-from sqlalchemy.ext.declarative import as_declarative, declared_attr
+from sqlalchemy.orm import as_declarative, declared_attr
 from typing import Any, List, TypeVar, Generic
 
 T = TypeVar('T')
@@ -50,8 +50,7 @@ class BaseModel(Base):
     created_at = Column(DateTime, default=datetime.now)
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
-    def __init__(self, id: int = None, created_by: str = None, updated_by: str = None, **kwargs):
+    def __init__(self, created_by: str = None, updated_by: str = None, **kwargs):
         super().__init__(**kwargs)
-        self.id: int = id
         self.created_by: str = created_by
         self.updated_by: str = updated_by

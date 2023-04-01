@@ -7,8 +7,8 @@ import statsmodels.api as sm
 import statsmodels.formula.api as smf
 from sqlalchemy.orm import Session
 import os
-from app.internal.dao.db import get_db_session
 
+from app.internal.dao.db import get_db_session
 from app.internal.model.model.constants import FORMULA, PREDICTED_VAR, RANDOM_FACTOR_COLUMN, OUTPUT_MODEL_FOLDER
 from app.internal.model.model.metric import MetricsProvider, NormalMetricsProvider
 from app.internal.model.model.output import Output, MosquittoNormalOutput
@@ -16,6 +16,7 @@ from app.internal.model.model.data_loader import DataLoader, WeatherDataLoader
 
 
 class Model(ABC):
+
     @property
     @abstractmethod
     def data_loader(self) -> DataLoader: ...
@@ -53,12 +54,16 @@ class Nb2MosquittoModel(Model):
     metrics_provider = NormalMetricsProvider()
     time_window_id: int
     file_path: str
-    model = None
+    model: sm.MixedLM = None
 
     def __init__(self, time_window_id: int) -> None:
+        super().__init__()
         self.time_window_id = time_window_id
         self.file_path = f"{OUTPUT_MODEL_FOLDER}/time_window_id.pkl"
         self.load_model()
+
+    def get_model(self) -> sm.MixedLM:
+        return super().get_model()
 
     def get_alpha_constants(self, df: pd.DataFrame) -> float:
         # TODO: refactor this function, cannot typehint for model and result so we just accept it colorless
@@ -80,7 +85,7 @@ class Nb2MosquittoModel(Model):
 
         if not is_force and self.model is not None:
             # if not force to retrain, we return current model if has
-            return model
+            return self.model
 
         if db_session is None:
             db_session = next(get_db_session())

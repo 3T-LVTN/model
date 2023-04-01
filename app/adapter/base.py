@@ -1,4 +1,4 @@
-from abc import ABC
+from fastapi_camelcase import CamelModel
 from typing import Any, Union
 
 import requests
@@ -6,13 +6,16 @@ import requests
 from app.common.constant import SUCCESS_STATUS_CODE
 
 
-class BaseResponse(ABC):
+class BaseResponse(CamelModel):
     code: int
     message: str
     data: Any
 
+    class Config:
+        arbitrary_types_allowed = True
 
-class BaseAdapter(ABC):
+
+class BaseAdapter:
     url: str
     name: str
 
