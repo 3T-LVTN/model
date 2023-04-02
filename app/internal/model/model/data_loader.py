@@ -6,6 +6,7 @@ from abc import ABC, abstractmethod
 
 from app.common.constant import PLUS
 from app.internal.dao.db import get_db_session
+from app.internal.dao.predicted_var import PredictedVar
 from app.internal.dao.weather_log import WeatherLog
 from app.internal.dao.location import Location
 from app.internal.model.model.constants import *
@@ -37,8 +38,11 @@ class WeatherDataLoader(DataLoader):
     def get_train_data(self, db_session: Session, *args,  **kwargs) -> pd.DataFrame:
         return self._get_data(db_session, *args, **kwargs)
 
-    def load_predicted_var(self, db_session, time_window_id: int) -> pd.DataFrame:
-        ...
+    def load_predicted_var(self, db_session: Session, location_id: int, time_window_id: int) -> pd.DataFrame:
+        return db_session.query(PredictedVar).filter(
+            PredictedVar.location_id == location_id,
+            PredictedVar.time_window_id == time_window_id
+        ).first()
 
     def _get_data(self, db_session: Session, time_window_id: int, *args,  **kwargs) -> pd.DataFrame:
         weather_log = self.load_weather_log_from_db(db_session, time_window_id)

@@ -25,7 +25,7 @@ class WeatherLog(BaseModel):
     heat_index = Column(Float)
     wind_speed = Column(Float)
     wind_gust = Column(Float)
-    wind_direction = Column(String(50))
+    wind_direction = Column(Float)
     wind_chill = Column(Float)
     precipitation = Column(Float)
     precipitation_cover = Column(Float)
@@ -33,9 +33,9 @@ class WeatherLog(BaseModel):
     visibility = Column(Float)
     cloud_cover = Column(Float)
     sea_level_pressure = Column(Float)
-    weather_type = Column(String(50))
+    weather_type = Column(String(500))
     info = Column(String(50))
-    conditions = Column(String(50))
+    conditions = Column(String(500))
 
     ######## relationship ############
     location: Mapped['Location'] = relationship(viewonly=True)

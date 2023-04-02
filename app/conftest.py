@@ -93,7 +93,7 @@ def create_test_database():
         get_db_session
     ] = get_test_db_session(test_engine)  # Mock the Database Dependency
     yield  # Run the tests.
-    drop_database(db_uri)  # Drop the test database.
+    # drop_database(db_uri)  # Drop the test database.
 
 
 # @pytest.fixture(autouse=True)

@@ -5,7 +5,7 @@ import uuid
 from argparse import FileType
 from io import BytesIO
 from tempfile import NamedTemporaryFile
-from typing import Any, Dict, Generator, Iterable, List, Sequence, Set, Tuple, Type, Union
+from typing import Any, Collection, Dict, Generator, Iterable, List, Sequence, Set, Sized, Tuple, Type, Union
 
 import requests
 from openpyxl import Workbook, load_workbook
@@ -76,7 +76,7 @@ class ExcelLoader:
             raise Exception('Thiếu thông tin các cột: %s' % ', '.join(cols))
         return self.headers
 
-    def iter_data(self) -> List:
+    def iter_data(self) -> Generator:
         for row in self.sheet.iter_rows(min_row=self.row_line):
             # Ignore empty row
             if len([x for x in row if x.value is not None]) > 0:
@@ -104,7 +104,7 @@ class ExcelLoader:
         except ValueError:
             raise Exception('Giá trị không hợp lệ "%s"' % value)
 
-    def load_strip_cell_int(self, row: Sequence[Cell], col: str) -> int or None:
+    def load_strip_cell_int(self, row: Sequence[Cell], col: str) -> int:
         """Remove whitespace and end line then parse int
         """
         value = self.load_strip_cell_float(row, col)
@@ -115,7 +115,7 @@ class ExcelLoader:
         except ValueError:
             raise Exception('Giá trị không hợp lệ "%s"' % value)
 
-    def load_strip_cell_date_time(self, row: Sequence[Cell], col: str) -> datetime or None:
+    def load_strip_cell_date_time(self, row: Sequence[Cell], col: str) -> datetime.datetime:
         """Remove whitespace and end line convert type %Y-%m-%d or %d/%m/%Y to datetime
         """
         return time_util.to_datetime(self.load_strip_cell_string(row, col))
@@ -123,7 +123,7 @@ class ExcelLoader:
     def load_strip_cell_array_string(self,
                                      row: Sequence[Cell],
                                      col: str,
-                                     split_by: str = _SHEET_LIST_SPLIT_BY) -> List[str] or None:
+                                     split_by: str = _SHEET_LIST_SPLIT_BY) -> List[str]:
         """Remove whitespace and end line then split by split_by
         """
         values = self.load_strip_cell_string(row, col)
@@ -135,7 +135,7 @@ class ExcelLoader:
     def load_strip_cell_array_integer(self,
                                       row: Sequence[Cell],
                                       col: str,
-                                      split_by: str = _SHEET_LIST_SPLIT_BY) -> List[int] or None:
+                                      split_by: str = _SHEET_LIST_SPLIT_BY) -> list[int]:
         """Remove whitespace and end line then split by split_by
         """
         values = self.load_strip_cell_array_string(row, col, split_by)
@@ -145,7 +145,7 @@ class ExcelLoader:
 
     def log_error(self, e: Union[Exception, str], row: int = None, is_error_on_column: bool = True):
         if is_error_on_column:
-            error_msg = _ERROR_COLUMN_FORMAT.format(self.last_load_col, error_msg)
+            error_msg = _ERROR_COLUMN_FORMAT.format(self.last_load_col, e.__str__())
         if row:
             self.sheet.cell(row, self.error_column, value=error_msg)
         else:
@@ -225,13 +225,13 @@ class ExcelWriterHelper:
 
     def convert_ordered_data_to_rows(self,
                                      sheet_name: str = DEFAULT_SHEET_NAME,
-                                     data: Iterable[Iterable[Any]] = None) -> List[Dict[str, Any]]:
+                                     data: Iterable[Sized] = None) -> list[dict[str, Any]]:
         '''convert ordered data to '''
         if data is None:
-            return
+            return None
         columns = self.sheets.get(sheet_name).columns
         if (any(len(row) != len(columns) for row in data)):
-            return
+            return None
         converted_data: List[Dict[str, Any]] = []
         for row in data:
             converted_row = {column_name: row_data for row_data, column_name in zip(row, columns)}
@@ -273,17 +273,17 @@ class ExcelWriterHelper:
         self.write_col_names()
 
     def convert_timestamp_to_datetime(
-            self, sheet_name, convert_cols: Union[str, Iterable[str]],
+            self, sheet_name, convert_cols: Union[str, Collection[str]],
             format: str = "%Y-%m-%d %H:%M:%S"):
         if not sheet_name or not convert_cols or len(convert_cols) == 0:
             return
         if not hasattr(convert_cols, '__iter__'):
-            convert_cols = [convert_cols]
+            convert_cols_list = [convert_cols]
 
         work_sheet = self.sheets.get(sheet_name)
         columns = self.columns.get(sheet_name)
-        column_idxes = [columns.get(column)-1 for column in convert_cols]  # -1 because base 0 not base 1
-        rows: Generator[Iterable[Cell]] = work_sheet.rows
+        column_idxes = [columns.get(column)-1 for column in convert_cols_list]  # -1 because base 0 not base 1
+        rows: Generator[Collection[Cell], Cell, Cell] = work_sheet.rows
         next(rows)  # skip header
         while True:
             try:
