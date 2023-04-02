@@ -8,8 +8,6 @@ from pydantic import BaseModel
 
 
 class WeatherLogFilter(BaseModel):
-    # data column
-    avg_rain_fall: int = None
     avg_temp: int = None
     max_temp: int = None
     min_temp: int = None

@@ -20,6 +20,7 @@ class PredictedVar(BaseModel):
     time_window_id: int = Column(Integer, ForeignKey("time_window.id"))
 
     # data column
+    date_time: int = Column(Integer)
     value: int = Column(Integer)
 
     ######## relationship ############
