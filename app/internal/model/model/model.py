@@ -9,13 +9,15 @@ from sqlalchemy.orm import Session
 import os
 
 from app.internal.dao.db import get_db_session
-from app.internal.model.model.constants import FORMULA, PREDICTED_VAR, RANDOM_FACTOR_COLUMN, OUTPUT_MODEL_FOLDER
+from app.internal.model.model.constants import FORMULA, PREDICTED_VAR, RANDOM_FACTOR_COLUMN, OUTPUT_MODEL_FOLDER, VC_FORMULA
 from app.internal.model.model.metric import MetricsProvider, NormalMetricsProvider
 from app.internal.model.model.output import Output, MosquittoNormalOutput
 from app.internal.model.model.data_loader import DataLoader, WeatherDataLoader
 
 
 class Model(ABC):
+
+    file_path: str
 
     @property
     @abstractmethod
@@ -25,28 +27,35 @@ class Model(ABC):
     @abstractmethod
     def metrics_provider(self) -> MetricsProvider: ...
 
-    @property
-    @abstractmethod
-    def file_path(self) -> str: ...
-
     # function
+
     @abstractmethod
     def train(self, *args, **kwargs): ...
 
     @abstractmethod
-    def predict(self,  *args, **kwargs) -> Output: ...
+    def predict_history(self,  *args, **kwargs) -> Output: ...
 
     def load_model(self):
+        if self.model is not None:
+            return None
         if not os.path.isfile(self.file_path):
             return None
-        with open(self.file_path, 'rb') as f:
-            # Load the pickled object
-            self.model = pickle.load(f)
+        try:
+            with open(self.file_path, 'rb') as f:
+                # Load the pickled object
+                self = pickle.load(f)
+        except EOFError:
+            return None
 
     def get_model(self):
+        self.load_model()
         if self.model is None:
             return self.train()
         return self.model
+
+    def save(self):
+        with open(self.file_path, "wb+") as f:
+            pickle.dump(self, f)
 
 
 class Nb2MosquittoModel(Model):
@@ -54,7 +63,7 @@ class Nb2MosquittoModel(Model):
     metrics_provider = NormalMetricsProvider()
     time_window_id: int
     file_path: str
-    model: sm.MixedLM = None
+    model: sm.BinomialBayesMixedGLM = None
 
     def __init__(self, time_window_id: int) -> None:
         super().__init__()
@@ -68,17 +77,23 @@ class Nb2MosquittoModel(Model):
     def get_alpha_constants(self, df: pd.DataFrame) -> float:
         # TODO: refactor this function, cannot typehint for model and result so we just accept it colorless
         # some string constant below is math symbol and just has meaning in this specific function so i dont think we should declare constant for them
-        poisson = sm.MixedLM(FORMULA, df, family=sm.families.Poisson()).fit()
+        print(len(df[PREDICTED_VAR]))
+        [print(len(df[col])) for col in df.columns if str(col) != PREDICTED_VAR]
+        poisson = sm.GLM(
+            df[PREDICTED_VAR],
+            df[[col for col in df.columns if str(col) != PREDICTED_VAR]],
+            family=sm.families.Poisson()).fit()
 
-        df["LAMBDA"] = poisson.mu
-        df['AUX_OLS_DEP'] = df.apply(lambda x: ((x[PREDICTED_VAR] - x['LAMBDA'])
-                                                ** 2 - x['LAMBDA']) / x['LAMBDA'], axis=1)
+        train_df = df.copy()
+        train_df["LAMBDA"] = poisson.mu
+        train_df['AUX_OLS_DEP'] = train_df.apply(lambda x: ((x[PREDICTED_VAR] - x['LAMBDA'])
+                                                            ** 2 - x['LAMBDA']) / x['LAMBDA'], axis=1)
 
         # use patsy to form the model specification for the OLSR
         ols_expr = """AUX_OLS_DEP ~ LAMBDA - 1"""
 
         # Configure and fit the OLSR model
-        aux_olsr_results = smf.ols(ols_expr, df).fit()
+        aux_olsr_results = smf.ols(ols_expr, train_df).fit()
         return aux_olsr_results.params[0]
 
     def train(self, db_session: Session = None, is_force=False) -> Any:
@@ -89,25 +104,25 @@ class Nb2MosquittoModel(Model):
 
         if db_session is None:
             db_session = next(get_db_session())
-        df = self.data_loader.get_train_data(db_session)
+        df = self.data_loader.get_train_data(db_session, self.time_window_id)
 
-        model = sm.MixedLM.from_formula(
-            FORMULA, df, groups=df[RANDOM_FACTOR_COLUMN],
-            family=sm.families.NegativeBinomial(alpha=self.get_alpha_constants(df)))
+        alpha = self.get_alpha_constants(df)
 
-        metric = self.metrics_provider.get_custom_metrics()
+        model = sm.PoissonBayesMixedGLM.from_formula(
+            formula=FORMULA, data=df, vc_formulas=VC_FORMULA,
+            vcp_p=alpha,
+        )
+        model.family = sm.families.NegativeBinomial(alpha=alpha)
 
-        result = model.fit_regularized(eval_func=metric)
-
-        with open(self.file_path, "w+"):
-            result.save(self.file_path)
-
+        result = model.fit_map()
+        self.save()
         return result
 
-    def predict(self, longitude: float, lattitude: float, db_session: Session = None, *args, **kwargs) -> MosquittoNormalOutput:
+    def predict_history(self, longitude: float, lattitude: float, date_time: int, db_session: Session = None, *args, **
+                        kwargs) -> MosquittoNormalOutput:
         if db_session is None:
             db_session = next(get_db_session())
-        inp = self.data_loader.get_input_data(db_session, longitude, lattitude)
+        inp = self.data_loader.get_history_input_data(db_session, longitude, lattitude, date_time)
         model = self.get_model()
         return MosquittoNormalOutput(
             count=model.predict(inp)

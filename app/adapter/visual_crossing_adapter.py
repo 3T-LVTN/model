@@ -28,7 +28,6 @@ class GetWeatherRequest(CamelModel):
     latitude: str = None
     start_date_time: int = None
     end_date_time: int = None
-    key: str = None
 
 
 class _GetWeatherRequest(CamelModel):
@@ -129,14 +128,14 @@ class VisualCrossingAdapter(BaseAdapter):
         if base_resp.code == SUCCESS_STATUS_CODE:
             data = self._format_resp_data(base_resp.data)
             return GetWeatherLogResponse(code=base_resp.code, message=base_resp.message, data=[data])
-
-        # retry in case we run out of api key
-        try:
-            # try to get next key
-            self.current_key = next(API_KEY_GENERATOR)
-        except StopIteration:
-            # if stop iteration mean we run out of api key, return empty success code so we stop and save record to db
-            return GetWeatherLogResponse(code=SUCCESS_STATUS_CODE, data=[])
+        if self.current_key is None:
+            # retry in case we run out of api key
+            try:
+                # try to get next key
+                self.current_key = next(API_KEY_GENERATOR)
+            except StopIteration:
+                # if stop iteration mean we run out of api key, return empty success code so we stop and save record to db
+                return GetWeatherLogResponse(code=SUCCESS_STATUS_CODE, data=[])
         # retry this req
         req.key = self.current_key
         base_resp = self.get(end_point=_GET_WEATHER_LOG_END_POINT, params=req)

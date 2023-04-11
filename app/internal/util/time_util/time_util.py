@@ -53,7 +53,7 @@ def datetime_to_ts(inp_dt: datetime) -> int:
 
 
 def ts_to_str(inp_ts: int, format: str) -> str:
-    return datetime_to_str(ts_to_datetime(inp_ts), format)
+    return datetime.fromtimestamp(inp_ts).strftime(format)
 
 
 def now() -> datetime:

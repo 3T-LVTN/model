@@ -71,28 +71,6 @@ def insert_table_s2_predicted_var_to_db(db_session: Session):
         csv_reader = csv.reader(f, delimiter=COMMA)
         rows = list(csv_reader)
         headers: list[str]
-        min_ts: int = 10e10
-        max_ts: int = -1
-        for idx, row in enumerate(rows):
-            if idx == 0:
-                headers = row
-                idx += 1
-                continue
-            data_dict = dict(zip(headers, row))
-            genus = data_dict.pop("genus")
-            if "Culex".lower() not in genus.lower().strip().strip('"'):
-                continue
-            date_time = datetime.strptime(data_dict.pop("date").strip('"'), r'%Y-%m-%d')
-            min_ts = min(time_util.datetime_to_ts(time_util.to_start_date(date_time)), min_ts)
-            max_ts = max(time_util.datetime_to_ts(time_util.to_end_date(date_time)), max_ts)
-        filter = TimeWindowFilter(
-            eq_start_date_ts=min_ts,  # filter min ts is in the same date with that time window start ts
-            eq_end_date_ts=max_ts    # filter max ts is in the same date with that time window end ts
-        )
-        time_window = time_window_repo.get_first(db_session, filter)
-        if time_window is None:
-            time_window = time_window_repo.save(db_session, TimeWindow(
-                sliding_size=1, start_ts=min_ts, end_ts=max_ts))
         for idx, row in enumerate(rows):
             if idx == 0:
                 headers = row
@@ -106,7 +84,7 @@ def insert_table_s2_predicted_var_to_db(db_session: Session):
             try:
                 value = int(value_str)
             except:
-                continue
+                value = int(float(value_str))
             longitude = data_dict.pop("long")
             latitude = data_dict.pop("lat")
             location = location_repo.get_first(
@@ -118,5 +96,5 @@ def insert_table_s2_predicted_var_to_db(db_session: Session):
             data_dict.update({"date_time": date_time})
 
             predicted_var = PredictedVar(value=value, date_time=date_time,
-                                         location_id=location.id, time_window_id=time_window.id)
+                                         location_id=location.id, time_window_id=1)
             predicted_var_repo.save(db_session, predicted_var)

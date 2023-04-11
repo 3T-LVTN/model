@@ -26,5 +26,3 @@ class PredictedVar(BaseModel):
     ######## relationship ############
     location: Mapped['Location'] = relationship("Location", foreign_keys=[location_id], viewonly=True)
     time_window: Mapped['TimeWindow'] = relationship("TimeWindow", foreign_keys=[time_window_id], viewonly=True)
-
-    UniqueConstraint("location_id", "time_window_id")

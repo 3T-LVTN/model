@@ -29,12 +29,12 @@ class WeatherLog(BaseModel):
     wind_chill = Column(Float)
     precipitation = Column(Float)
     precipitation_cover = Column(Float)
-    snow_depth = Column(Float)
+    # snow_depth = Column(Float)
     visibility = Column(Float)
     cloud_cover = Column(Float)
     sea_level_pressure = Column(Float)
     weather_type = Column(String(500))
-    info = Column(String(50))
+    # info = Column(String(50))
     conditions = Column(String(500))
 
     ######## relationship ############
