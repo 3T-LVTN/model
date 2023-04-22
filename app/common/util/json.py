@@ -9,7 +9,7 @@ from unittest import mock
 _logger = logging.getLogger(__name__)
 
 
-class JSONEncoder(json.JSONEncoder):
+class JsonEncoder(json.JSONEncoder):
     """Customized flask JSON Encoder"""
 
     def default(self, o):
@@ -29,7 +29,7 @@ class JSONEncoder(json.JSONEncoder):
         return super().default(o)
 
 
-_default_json_encoder = JSONEncoder()
+_default_json_encoder = JsonEncoder()
 json_encode = _default_json_encoder.encode
 
 

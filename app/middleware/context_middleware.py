@@ -2,8 +2,12 @@
 from fastapi import Request
 from fastapi.security import HTTPBearer
 from fastapi.security.utils import get_authorization_scheme_param
+from fastapi import Depends
 from starlette_context.middleware import ContextMiddleware
+
 from app.common.context import Context
+from app.internal.dao.db import get_db_session
+from app.common import logger
 
 reusable_oauth2 = HTTPBearer(
     scheme_name='Authorization'
@@ -21,6 +25,9 @@ class CustomContextMiddleware(ContextMiddleware):
 
         return {
             "ctx": Context(
-                method=request.method
-            )
+                method=request.method,
+                db_session=Depends(get_db_session),
+                logger=logger.get(),
+            ),
+
         }

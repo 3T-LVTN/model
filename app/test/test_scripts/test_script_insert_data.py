@@ -23,5 +23,5 @@ class TestScripts:
 
     def test_predict(self):
         model = Nb2MosquittoModel(1)
-        a = model.predict_history(27.581094, -82.554803,1452186000)
+        a = model.predict(27.581094, -82.554803, 1452186000)
         print(a)

@@ -9,6 +9,8 @@ from fastapi.exceptions import RequestValidationError
 from app.config import env_var
 from app.middleware.context_middleware import CustomContextMiddleware
 from app.internal.celery.celery import celery_app  # noqa #import this so we can start celery when we start app
+from app.api.router.router import router
+from app.internal.model.model.model import Nb2MosquittoModel
 
 logging.StreamHandler(sys.stdout)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -20,9 +22,9 @@ def get_application() -> FastAPI:
 
     # add middleware to set context
     app.add_middleware(CustomContextMiddleware)
+    app.include_router(router)
 
     # Add exception handler
-
     # add known exception handler in future
     # application.add_exception_handler(DefinedException, defined_exception_handler)
 
@@ -41,6 +43,7 @@ async def startup_event():
 
     # Set log level
     logging.basicConfig(level=logging.INFO)
+    from app.internal.service.register import service  # initialize service to ensure model is load
 
 
 if __name__ == "__main__":

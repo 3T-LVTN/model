@@ -36,3 +36,7 @@ LOGGING_CONFIG: Dict[str, Any] = {
 SLACK_WEBHOOK_URL = os.getenv("SLACK_WEBHOOK_URL", default="")
 ENVIRONMENT = os.getenv("ENVIRONMENT", default="DEVELOP")
 SLACK_ALERT_CHANNEL_NAME = os.getenv("SLACK_ALERT_CHANNEL", default="hoethy")
+
+
+# EXPERIMENT
+IS_EXPERIMENT: bool = True if os.getenv("IS_EXPERIMENT") else False

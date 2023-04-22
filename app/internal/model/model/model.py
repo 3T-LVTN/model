@@ -33,7 +33,7 @@ class Model(ABC):
     def train(self, *args, **kwargs): ...
 
     @abstractmethod
-    def predict_history(self,  *args, **kwargs) -> Output: ...
+    def predict(self,  *args, **kwargs) -> Output: ...
 
     def load_model(self):
         if self.model is not None:
@@ -68,7 +68,7 @@ class Nb2MosquittoModel(Model):
     def __init__(self, time_window_id: int) -> None:
         super().__init__()
         self.time_window_id = time_window_id
-        self.file_path = f"{OUTPUT_MODEL_FOLDER}/time_window_id.pkl"
+        self.file_path = f"{OUTPUT_MODEL_FOLDER}/{time_window_id}.pkl"
         self.load_model()
 
     def get_model(self) -> sm.MixedLM:
@@ -118,8 +118,8 @@ class Nb2MosquittoModel(Model):
         self.save()
         return result
 
-    def predict_history(self, longitude: float, lattitude: float, date_time: int, db_session: Session = None, *args, **
-                        kwargs) -> MosquittoNormalOutput:
+    def predict(self, longitude: float, lattitude: float, date_time: int, db_session: Session = None, *args, **
+                kwargs) -> MosquittoNormalOutput:
         if db_session is None:
             db_session = next(get_db_session())
         inp = self.data_loader.get_history_input_data(db_session, longitude, lattitude, date_time)
