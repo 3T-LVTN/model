@@ -14,7 +14,7 @@ DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 class ApiException(ErrorMessage):
 
-    def __init__(self, error: Exception, body: Any,  params=Any) -> None:
+    def __init__(self, error: Exception, body: Any= None,  params:Any= None) -> None:
         self.error = error
         attachment = [Attachment(text="REQUEST BODY", value=body),
                       Attachment(text="REQUEST PARAM", value=params)]
@@ -43,13 +43,12 @@ class CustomAPIRoute(APIRoute):
             finally:
                 # end_time = datetime.datetime.strftime(datetime.datetime.now(), DATETIME_FORMAT)
                 req_body = json.loads(await request.body())
-                db_session = next(db.get_db_session())
-
+                
                 if e:
                     err = ApiException(error=e, body=req_body, params=request.query_params)
                     slack_adapter.send_error(error=err)
 
-                db_session.close()
+                
         return custom_route_handler
 
 

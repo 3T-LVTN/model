@@ -79,12 +79,6 @@ def create_test_database():
     We use the `sqlalchemy_utils` package here for a few helpers in consistently
     creating and dropping the database.
     """
-    # if database_exists(db_uri):
-    #     drop_database(db_uri)
-    # create_database(db_uri)  # Create the test database.
-    # Base.metadata.create_all(test_engine)  # Create the tables.
-    # run_sql('app\\tests\\scripts\\mock_common_data_test.sql')  # Mock common data test
-    # run_sql('app\\tests\\scripts\\mock_common_data_test.sql')  # Mock common data test
     from app.adapter.base import BaseAdapter, BaseResponse
     # mock this so when we run test we wont be spam with noti
     mock_adapter = patch.object(BaseAdapter, attribute="_get_response",

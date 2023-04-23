@@ -20,7 +20,7 @@ class AttachmentField(BaseModel):
 
 
 class Attachment(BaseModel):
-    _color: Optional[str]
+    color: Optional[str]
     text: Optional[str]
     '''attachment title, should indicate where error is or error title'''
     fields: Optional[list[AttachmentField]]

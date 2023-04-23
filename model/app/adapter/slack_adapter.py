@@ -4,7 +4,7 @@ from app.config import env_var
 
 
 class SlackMessageAdapter(BaseAdapter):
-    mention_users = "cloudythy"
+    mention_users = ["cloudythy"]
 
     def __init__(self, cfg: WebhookConfig) -> None:
         super().__init__(url=cfg.url, name="SLACK")
@@ -19,20 +19,21 @@ class SlackMessageAdapter(BaseAdapter):
 
         error_info = error.get_attachments()
         for info in error_info:
-            info._color = INFO_COLOR
+            info.color = INFO_COLOR
         error_msg = error.get_message()
 
         payload = Payload(
             text=f'{error_msg} {" ".join([f"<@{user}>" for user in self.mention_users])}',
             channel=self.cfg.channel,
-            attachments=error
+            attachments=error.get_attachments()
         )
 
-        self.post(payload.json())
+        self.post(self.cfg.url, payload)
 
 
 cfg = WebhookConfig(
     env=env_var.ENVIRONMENT,
     url=env_var.SLACK_WEBHOOK_URL,
+    channel=env_var.SLACK_ALERT_CHANNEL_NAME,
 )
 slack_adapter = SlackMessageAdapter(cfg=cfg)
