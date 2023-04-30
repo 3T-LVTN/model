@@ -22,12 +22,10 @@ class CustomContextMiddleware(ContextMiddleware):
 
         # if scheme.lower() != "bearer":
         #     return dict()
-
+        ctx = Context(
+            method=request.method,
+            logger=logger.get(),
+        )
         return {
-            "ctx": Context(
-                method=request.method,
-                db_session=Depends(get_db_session),
-                logger=logger.get(),
-            ),
-
+            "ctx": ctx
         }

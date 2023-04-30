@@ -1,19 +1,18 @@
-from dataclasses import dataclass
+from typing import Annotated, Generator
+from fastapi import Depends
 from sqlalchemy.orm import Session
 from logging import LoggerAdapter
-from contextlib import contextmanager
+from starlette_context import context
 
 from app.common.logger import CustomLoggerAdapter
-from app.internal.model.model.model import Nb2MosquittoModel
+from app.internal.dao import db
 
 
 class Context(dict):
     '''
     context for easily pass object through api call
-    currently we do not implemented A|B testing, model only use our first time window
     '''
-    method: str
-    db_session: Session
+    method: str = ""
     logger: LoggerAdapter
 
     def extract_logger(self, tag: str, name: str) -> LoggerAdapter:
@@ -28,4 +27,12 @@ class Context(dict):
         return attach_logger_ctx()
 
     def extract_db_session(self) -> Session:
-        return self.db_session
+        return self.get("db_session")
+
+    def attach_db_session(self, db_session: Session):
+        self.update({"db_session": db_session})
+
+
+def get_context() -> Generator[Context, None, None]:
+    ctx = context.get("ctx")
+    return ctx

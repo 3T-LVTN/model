@@ -18,11 +18,11 @@ logging.config.dictConfig(env_var.LOGGING_CONFIG)
 
 
 def get_application() -> FastAPI:
-    app = FastAPI()
+    app = FastAPI(docs_url="/docs", redoc_url="/redoc", openapi_url="/openapi.json")
 
     # add middleware to set context
     app.add_middleware(CustomContextMiddleware)
-    app.include_router(router)
+    app.include_router(router, prefix="/api")
 
     # Add exception handler
     # add known exception handler in future
@@ -43,7 +43,7 @@ async def startup_event():
 
     # Set log level
     logging.basicConfig(level=logging.INFO)
-    from app.internal.service.register import service  # initialize service to ensure model is load
+    # from app.internal.service.register import service  # initialize service to ensure model is load
 
 
 if __name__ == "__main__":
