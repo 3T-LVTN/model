@@ -7,10 +7,10 @@ APP_PORT = 8000
 
 # DB
 DB_HOST: str = os.getenv("DB_HOST", default="localhost")
-DB_PORT: str = os.getenv("DB_PORT", default="5432")
+DB_PORT: str = os.getenv("DB_PORT", default="5005")
 DB_NAME: str = os.getenv("DB_NAME", default="vove")
-DB_USERNAME: str = os.getenv("DB_USERNAME", default="postgres")
-DB_PASSWORD: str = os.getenv("DB_PASSWORD", default="thinh3112001")
+DB_USERNAME: str = os.getenv("POSTGRES_USER", default="postgres")
+DB_PASSWORD: str = os.getenv("POSTGRES_PASSWORD", default="thinh3112001")
 DB_URI: str = f'postgresql://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}:' \
     f'{DB_PORT}/{DB_NAME}'
 
