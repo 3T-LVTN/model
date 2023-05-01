@@ -8,7 +8,7 @@ from app.api.request.get_prediction_request import GetPredictionRequest
 from app.internal.service.register import service
 from app.common.context import Context, get_context
 
-prediction_router = APIRouter()
+prediction_router = CustomAPIRouter()
 
 
 @prediction_router.post("/prediction", response_model=GetPredictionResponse)

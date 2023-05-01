@@ -97,14 +97,14 @@ class VisualCrossingAdapter(BaseAdapter):
         return [data.strip() for data in data_list]
 
     def _format_resp_data(self, data: Any) -> GetWeatherLogResponseData:
-        content = codecs.decode(data, 'utf-8', errors='replace')
-        content = content.split("\n")
-        # TODO: improve performance by run in parralel below
-        resp_header = self._clean_header(content[0])
-        resp_content = self._format_resp(content[1])
-        resp_dict = dict(zip(resp_header, resp_content))
-        date_time = resp_dict.pop("date_time").strip('"')
         try:
+            content = codecs.decode(data, 'utf-8', errors='replace')
+            content = content.split("\n")
+            # TODO: improve performance by run in parralel below
+            resp_header = self._clean_header(content[0])
+            resp_content = self._format_resp(content[1])
+            resp_dict = dict(zip(resp_header, resp_content))
+            date_time = resp_dict.pop("date_time").strip('"')
             date_time = datetime.strptime(date_time, _RESP_DATE_TIME_FORMAT)
         except ValueError:
             logging.info("visual crossing has no data for this location")
