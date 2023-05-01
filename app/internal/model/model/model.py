@@ -54,7 +54,7 @@ class Model(ABC):
         return self.model
 
     def save(self):
-        with open(self.file_path, "wb+") as f:
+        with open(os.path.abspath(self.file_path), "wb+") as f:
             pickle.dump(self, f)
 
 
@@ -68,7 +68,7 @@ class Nb2MosquittoModel(Model):
     def __init__(self, time_window_id: int) -> None:
         super().__init__()
         self.time_window_id = time_window_id
-        self.file_path = f"{OUTPUT_MODEL_FOLDER}/{time_window_id}.pkl"
+        self.file_path = os.path.abspath(os.path.join(OUTPUT_MODEL_FOLDER, f"{time_window_id}.pkl"))
         self.load_model()
 
     def get_model(self) -> sm.MixedLM:
@@ -77,8 +77,6 @@ class Nb2MosquittoModel(Model):
     def get_alpha_constants(self, df: pd.DataFrame) -> float:
         # TODO: refactor this function, cannot typehint for model and result so we just accept it colorless
         # some string constant below is math symbol and just has meaning in this specific function so i dont think we should declare constant for them
-        print(len(df[PREDICTED_VAR]))
-        [print(len(df[col])) for col in df.columns if str(col) != PREDICTED_VAR]
         poisson = sm.GLM(
             df[PREDICTED_VAR],
             df[[col for col in df.columns if str(col) != PREDICTED_VAR]],
