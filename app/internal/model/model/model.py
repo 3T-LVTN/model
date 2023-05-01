@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+import logging
 from typing import Any
 import pandas as pd
 import numpy as np
@@ -38,24 +39,31 @@ class Model(ABC):
     def load_model(self):
         if self.model is not None:
             return None
+        logging.info("model file path", str(self.file_path))
+        # try to load model
         if not os.path.isfile(self.file_path):
             return None
         try:
-            with open(self.file_path, 'rb') as f:
+            logging.info(self.file_path)
+            with open(os.path.abspath(self.file_path), 'rb') as f:
                 # Load the pickled object
-                self = pickle.load(f)
+                self.model = pickle.load(f)
+                logging.info("load model success")
         except EOFError:
             return None
 
     def get_model(self):
         self.load_model()
+        # if try to load model still result in None
         if self.model is None:
-            return self.train()
+            logging.info("model is None train model")
+            self.train()
         return self.model
 
-    def save(self):
+    def save(self, model: Any):
+        self.model = model
         with open(os.path.abspath(self.file_path), "wb+") as f:
-            pickle.dump(self, f)
+            pickle.dump(self.model, f)
 
 
 class Nb2MosquittoModel(Model):
@@ -113,7 +121,7 @@ class Nb2MosquittoModel(Model):
         model.family = sm.families.NegativeBinomial(alpha=alpha)
 
         result = model.fit_map()
-        self.save()
+        self.save(result)
         return result
 
     def predict(self, longitude: float, lattitude: float, date_time: int, db_session: Session = None, *args, **
