@@ -5,6 +5,7 @@ import numpy as np
 
 from app.api.request.get_prediction_request import GetPredictionRequest
 from app.common.context import Context
+from app.common.exception import ThirdServiceException
 from app.internal.model.model.model import Nb2MosquittoModel
 from app.internal.service.dto.prediction_dto import PredictionDTO
 
@@ -14,8 +15,11 @@ def get_prediction(ctx: Context, model: Nb2MosquittoModel, request: GetPredictio
     result: list[PredictionDTO] = []
     max_value = -np.Infinity
     for location in request.locations:
-        prediction = model.predict(longitude=location.long, lattitude=location.lat,
-                                   date_time=int(datetime.datetime.now().timestamp()), db_session=db_session)
+        try:
+            prediction = model.predict(longitude=location.long, lattitude=location.lat,
+                                       date_time=int(datetime.datetime.now().timestamp()), db_session=db_session)
+        except ThirdServiceException:
+            continue
         if prediction is not None and not np.isinf(prediction.count):
             max_value = np.max([max_value, prediction.count])
             result.append(PredictionDTO(idx=location.idx, weight=prediction.count))

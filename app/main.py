@@ -3,8 +3,12 @@ import logging.config
 import sys
 import uvicorn
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+
+from app.adapter.base import BaseResponse
+from app.common.exception import ThirdServiceException
 
 from app.config import env_var
 from app.middleware.context_middleware import CustomContextMiddleware
@@ -26,7 +30,10 @@ def get_application() -> FastAPI:
 
     # Add exception handler
     # add known exception handler in future
-    # application.add_exception_handler(DefinedException, defined_exception_handler)
+    app.add_exception_handler(ThirdServiceException, lambda request, e:  JSONResponse(
+        status_code=500,
+        content=BaseResponse(code=e.code, message="another third party service, retry later or choose another location"))
+    )
 
     # add request validation error in future
     # application.add_exception_handler(
@@ -38,7 +45,7 @@ def get_application() -> FastAPI:
 app = get_application()
 
 
-@app.on_event("startup")
+@ app.on_event("startup")
 async def startup_event():
     import os
     os.system('alembic upgrade head')
