@@ -40,7 +40,8 @@ app = get_application()
 
 @app.on_event("startup")
 async def startup_event():
-
+    import os
+    os.system('alembic upgrade head')
     # Set log level
     logging.basicConfig(level=logging.INFO)
     # from app.internal.service.register import service  # initialize service to ensure model is load

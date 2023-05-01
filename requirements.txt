@@ -4,7 +4,7 @@ SQLAlchemy-Utils==0.40.0
 SQLAlchemy==2.0.0
 pydantic==1.8.2
 cryptography==37.0.4
-alembic==1.4.2
+alembic==1.10.4
 fastapi_camelcase==1.0.2
 starlette-context==0.3.2
 requests==2.23.0
