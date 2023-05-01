@@ -5,7 +5,7 @@ from sqlalchemy import func, asc
 from sqlalchemy.orm import Session
 from abc import ABC, abstractmethod
 
-from app.common.constant import PLUS, SUCCESS_STATUS_CODE
+from app.common.constant import LOCATION_DISTANCE_THRESHOLD, PLUS, SUCCESS_STATUS_CODE
 from app.common.exception import ThirdServiceException
 from app.internal.dao.db import get_db_session
 from app.internal.dao.predicted_var import PredictedVar
@@ -15,6 +15,7 @@ from app.internal.repository.weather_log import weather_log_repo
 from app.internal.model.model.constants import *
 from app.internal.util.time_util import time_util
 from app.adapter.visual_crossing_adapter import visual_crossing_adapter, GetWeatherRequest
+from app.internal.repository.location import location_repo
 
 
 class DataLoader(ABC):
@@ -83,6 +84,7 @@ class WeatherDataLoader(DataLoader):
     def _get_nearest_location(self, db_session: Session, longitude: float, lattitude: float) -> Location:
         distances = func.pow(Location.longitude - longitude, 2) + func.pow(Location.latitude - lattitude, 2)
         location = db_session.query(Location).order_by(distances).first()
+
         return location
 
     def _get_weather_log(self, db_session: Session, location: Location, date_time: int) -> WeatherLog:
@@ -116,9 +118,15 @@ class WeatherDataLoader(DataLoader):
         df = self.preprocess_weather_log(db_session, df)
         return df[NORMAL_COLUMNS+[RANDOM_FACTOR_COLUMN]]
 
-    def get_history_input_data(self, db_session: Session, longitude: float, lattitude: float, date_time: int, *args, **
+    def get_history_input_data(self, db_session: Session, longitude: float, latitude: float, date_time: int, *args, **
                                kwargs) -> pd.DataFrame:
-        location = self._get_nearest_location(db_session, longitude, lattitude)
+        location = self._get_nearest_location(db_session, longitude, latitude)
+        if location is None or (
+                pow(location.latitude - latitude, 2) + pow(location.longitude - longitude, 2) >
+                pow(LOCATION_DISTANCE_THRESHOLD, 2)):
+            # if there is no location is valid
+            location = Location(longitude=longitude, latitude=latitude)
+            location_repo.save(db_session, location)
         weather_log = self._get_weather_log(db_session, location, date_time)
 
         return self.get_history_input_df(db_session, weather_log)
