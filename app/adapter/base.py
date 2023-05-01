@@ -7,6 +7,7 @@ from fastapi_camelcase import CamelModel, BaseModel
 from typing import Any, Union
 from fastapi.encoders import jsonable_encoder
 import requests
+import logging
 
 from app.common.constant import SUCCESS_STATUS_CODE
 
@@ -35,6 +36,7 @@ class BaseAdapter:
 
     def _get_response(self, third_party_resp: requests.Response) -> BaseResponse:
         resp = BaseResponse()
+        logging.info(third_party_resp)
         if third_party_resp.status_code != SUCCESS_STATUS_CODE:
             resp.code = third_party_resp.status_code
             calling_url = third_party_resp.request.url
@@ -45,15 +47,16 @@ class BaseAdapter:
             calling_url = third_party_resp.request.url
             resp.message = f"call to third party {self.name} api {calling_url} success"
             resp.data = third_party_resp.content
+        logging.info(resp)
         return resp
 
     def post(self, end_point: str = "", payload: BaseModel = None) -> BaseResponse:
         url = self._to_api_url(end_point)
         headers = {'Content-type': 'application/json'}
-
+        logging.info(payload)
         return self._get_response(requests.post(url=url, json=jsonable_encoder(payload), headers=headers))
 
     def get(self, end_point: str = "", params: BaseModel = None) -> BaseResponse:
         url = self._to_api_url(end_point)
-
+        logging.info(params)
         return self._get_response(requests.get(url=url, params=jsonable_encoder(params), stream=True))

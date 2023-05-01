@@ -5,8 +5,12 @@ from fastapi_camelcase import CamelModel
 from pydantic import Json
 import json
 import re
+import logging
+
 from app.adapter.base import BaseAdapter, BaseResponse
 from app.common.constant import COMMA, DOUBLE_QUOTE, SUCCESS_STATUS_CODE, UNDERSCORE, WHITE_SPACE
+from app.common.context import Context
+from app.common.exception import ThirdServiceException
 from app.config.secret import API_KEY_GENERATOR
 from app.internal.util.time_util import time_util
 
@@ -93,13 +97,19 @@ class VisualCrossingAdapter(BaseAdapter):
         return [data.strip() for data in data_list]
 
     def _format_resp_data(self, data: Any) -> GetWeatherLogResponseData:
-        content = codecs.iterdecode(data, 'utf-8')
+        content = codecs.decode(data, 'utf-8', errors='replace')
+        content = content.split("\n")
         # TODO: improve performance by run in parralel below
-        resp_header = self._clean_header(next(content))
-        resp_content = self._format_resp(next(content))
+        resp_header = self._clean_header(content[0])
+        resp_content = self._format_resp(content[1])
         resp_dict = dict(zip(resp_header, resp_content))
         date_time = resp_dict.pop("date_time").strip('"')
-        resp_dict.update({"date_time": datetime.strptime(date_time, _RESP_DATE_TIME_FORMAT)})
+        try:
+            date_time = datetime.strptime(date_time, _RESP_DATE_TIME_FORMAT)
+        except ValueError:
+            logging.info("visual crossing has no data for this location")
+            raise ThirdServiceException()
+        resp_dict.update({"date_time": date_time})
         resp = GetWeatherLogResponseData(**resp_dict)
 
         return resp
@@ -145,7 +155,7 @@ class VisualCrossingAdapter(BaseAdapter):
         else:
             return GetWeatherLogResponse(**base_resp.dict())
 
-    def get_weather_log(self, base_req: GetWeatherRequest) -> GetWeatherLogResponse:
+    def get_weather_log(self,  base_req: GetWeatherRequest) -> GetWeatherLogResponse:
         req_list = self._prepare_list_request(base_req)
         resp = GetWeatherLogResponse()
         resp.data = []
