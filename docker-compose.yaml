@@ -15,6 +15,11 @@ services:
       - 5002:8000
     networks:
       - vove
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: ap-southeast-1
+        awslogs-group: vove-model
 
 networks:
   vove:

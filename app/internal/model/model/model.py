@@ -9,11 +9,13 @@ import statsmodels.formula.api as smf
 from sqlalchemy.orm import Session
 import os
 
+from app.adapter.file_service.file_service_adapter import file_service
 from app.internal.dao.db import get_db_session
-from app.internal.model.model.constants import FORMULA, PREDICTED_VAR, RANDOM_FACTOR_COLUMN, OUTPUT_MODEL_FOLDER, VC_FORMULA
+from app.internal.model.model.constants import FORMULA, PREDICTED_VAR, VC_FORMULA
 from app.internal.model.model.metric import MetricsProvider, NormalMetricsProvider
 from app.internal.model.model.output import Output, MosquittoNormalOutput
 from app.internal.model.model.data_loader import DataLoader, WeatherDataLoader
+from app.internal.util.time_util import time_util
 
 
 class Model(ABC):
@@ -38,32 +40,28 @@ class Model(ABC):
 
     def load_model(self):
         if self.model is not None:
-            return None
-        logging.info("model file path", str(self.file_path))
+            return
+        logging.info(f"model file path {self.file_path}")
         # try to load model
-        if not os.path.isfile(self.file_path):
-            return None
         try:
             logging.info(self.file_path)
-            with open(os.path.abspath(self.file_path), 'rb') as f:
-                # Load the pickled object
-                self.model = pickle.load(f)
-                logging.info("load model success")
+            data = file_service.get_file_content(self.file_path)
+            self.model = pickle.loads(data)
+            logging.info("load model success")
         except EOFError:
-            return None
+            return
 
     def get_model(self):
         self.load_model()
         # if try to load model still result in None
         if self.model is None:
-            logging.info("model is None train model")
+            logging.info("model is None start train model")
             self.train()
         return self.model
 
     def save(self, model: Any):
         self.model = model
-        with open(os.path.abspath(self.file_path), "wb+") as f:
-            pickle.dump(self.model, f)
+        file_service.upload_file(pickle.dumps(self.model), self.file_path)
 
 
 class Nb2MosquittoModel(Model):
@@ -76,7 +74,7 @@ class Nb2MosquittoModel(Model):
     def __init__(self, time_window_id: int) -> None:
         super().__init__()
         self.time_window_id = time_window_id
-        self.file_path = os.path.abspath(os.path.join(OUTPUT_MODEL_FOLDER, f"{time_window_id}.pkl"))
+        self.file_path = f"model/{time_window_id}.pkl"
         self.load_model()
 
     def get_model(self) -> sm.MixedLM:
@@ -124,12 +122,15 @@ class Nb2MosquittoModel(Model):
         self.save(result)
         return result
 
-    def predict(self, longitude: float, lattitude: float, date_time: int, db_session: Session = None, *args, **
+    def predict(self, longitude: float, latitude: float, date_time: int, db_session: Session = None, *args, **
                 kwargs) -> MosquittoNormalOutput:
         if db_session is None:
             db_session = next(get_db_session())
-        inp = self.data_loader.get_history_input_data(db_session, longitude, lattitude, date_time)
+        inp = self.data_loader.get_history_input_data(db_session, longitude, latitude, date_time)
         model = self.get_model()
+        count = model.predict(inp)
+        logging.info(
+            f"longitude: {longitude}, latitude: {latitude} has predict at {time_util.ts_to_datetime(date_time)} has {count}")
         return MosquittoNormalOutput(
-            count=model.predict(inp)
+            count=count
         )

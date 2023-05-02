@@ -1,5 +1,6 @@
 
 
+import logging
 from app.api.request.get_prediction_request import GetPredictionRequest
 from app.api.response.get_prediction_response import GetPredictionResponse, PredictionData
 from app.internal.service.dto.prediction_dto import PredictionDTO
@@ -16,7 +17,8 @@ class PredictionTransformer:
                 response.data.missing_locations.append(PredictionData(
                     idx=location.idx, long=location.long, lat=location.lat))
             else:
-                response.data.available_locations.append(PredictionData(
-                    idx=location.idx, long=location.long, lat=location.lat, weight=prediction.weight))
-
+                prediction_data = PredictionData(
+                    idx=location.idx, long=location.long, lat=location.lat, weight=prediction.weight)
+                response.data.available_locations.append(prediction_data)
+                logging.info(prediction_data)
         return response
