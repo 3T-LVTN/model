@@ -1,0 +1,31 @@
+version: '3.8'
+services:
+  redis:
+    image: redis:latest
+    container_name: redis
+    env_file:
+      - ${ENV_FILE}
+    ports:
+      - '${REDIS_PORT}:6379'
+  app:
+    image: model_${ENV}
+    container_name: model
+    environment:
+      - ENV=${ENV}
+    env_file:
+      - ${ENV_FILE}
+    ports:
+      - ${APP_PORT}:8000
+    networks:
+      - vove
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: ap-southeast-1
+        awslogs-group: vove-model-${ENV}
+        tag: '{{ with split .ImageName ":" }}{{join . "_"}}{{end}}-{{.ID}}'
+
+networks:
+  vove:
+    name: vove
+    external: true

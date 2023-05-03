@@ -1,0 +1,10 @@
+Generic single-database configuration.
+
+# init db with alembic
+## Step 1: init alembic folder
+- alembic init alembic
+## step 2: config your env file
+- in current env file we import our meta data, add sys path as alembic folder is not in our app
+- config your sqlalchemy.url in your alembic.ini file, as it is secret do not push it to your source code management
+## step 3: generate init db script file
+- alembic revision --autogenerate -m "auto-generate migration"
