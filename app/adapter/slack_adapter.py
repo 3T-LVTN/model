@@ -1,3 +1,5 @@
+import json
+import logging
 from app.adapter.base import BaseAdapter
 from app.adapter.dto.slack_dto import WebhookConfig, ErrorMessage, INFO_COLOR, Payload
 from app.config import env_var
@@ -20,7 +22,7 @@ class SlackMessageAdapter(BaseAdapter):
         error_info = error.get_attachments()
         for info in error_info:
             info.color = INFO_COLOR
-        error_msg = error.get_message()
+        error_msg = json.dumps(error.get_message())
 
         payload = Payload(
             text=f'{error_msg} {" ".join([f"<@{user}>" for user in self.mention_users])}',
@@ -28,7 +30,7 @@ class SlackMessageAdapter(BaseAdapter):
             attachments=error.get_attachments()
         )
 
-        self.post(self.cfg.url, payload)
+        self.post(payload=payload)
 
 
 cfg = WebhookConfig(

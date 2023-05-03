@@ -32,6 +32,8 @@ class BaseAdapter:
     def _to_api_url(self, end_point: str) -> str:
         if end_point.startswith("/"):
             return f"{self.url}{end_point}"
+        if len(end_point) == 0:
+            return self.url
         return f"{self.url}/{end_point}"
 
     def _get_response(self, third_party_resp: requests.Response) -> BaseResponse:
@@ -53,8 +55,10 @@ class BaseAdapter:
     def post(self, end_point: str = "", payload: BaseModel = None) -> BaseResponse:
         url = self._to_api_url(end_point)
         headers = {'Content-type': 'application/json'}
-        logging.info(payload)
-        return self._get_response(requests.post(url=url, json=jsonable_encoder(payload), headers=headers))
+        resp = self._get_response(requests.post(url=url, json=json.loads(payload.json()), headers=headers))
+        logging.info(payload.json())
+        logging.info(url)
+        return resp
 
     def get(self, end_point: str = "", params: BaseModel = None) -> BaseResponse:
         url = self._to_api_url(end_point)

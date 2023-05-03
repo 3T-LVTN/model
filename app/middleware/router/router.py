@@ -6,7 +6,7 @@ from fastapi import APIRouter
 from fastapi.routing import APIRoute
 from fastapi import Request, Response
 from starlette.responses import UJSONResponse
-from app.adapter.dto.slack_dto import Attachment, ErrorMessage
+from app.adapter.dto.slack_dto import Attachment, AttachmentField, ErrorMessage
 from app.internal.dao import db
 from app.adapter.slack_adapter import slack_adapter
 DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
@@ -14,14 +14,14 @@ DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 class ApiException(ErrorMessage):
 
-    def __init__(self, error: Exception, body: Any= None,  params:Any= None) -> None:
+    def __init__(self, error: Exception, body: Any = "",  params: Any = "") -> None:
         self.error = error
-        attachment = [Attachment(text="REQUEST BODY", value=body),
-                      Attachment(text="REQUEST PARAM", value=params)]
-        self.attachements = attachment
+        attachment_fields = [AttachmentField(title="REQUEST BODY", value=str(body)),
+                             AttachmentField(title="REQUEST PARAM", value=str(params))]
+        self.attachement = [Attachment(fields=attachment_fields)]
 
     def get_attachments(self) -> list[Attachment]:
-        return self.attachements
+        return self.attachement
 
     def get_message(self) -> str:
         return f"encounter {self.error.__str__()}"
@@ -43,12 +43,11 @@ class CustomAPIRoute(APIRoute):
             finally:
                 # end_time = datetime.datetime.strftime(datetime.datetime.now(), DATETIME_FORMAT)
                 req_body = json.loads(await request.body())
-                
+
                 if e:
                     err = ApiException(error=e, body=req_body, params=request.query_params)
                     slack_adapter.send_error(error=err)
 
-                
         return custom_route_handler
 
 

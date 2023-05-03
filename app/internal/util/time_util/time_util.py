@@ -7,6 +7,8 @@ YYYYMMDD_HHMMSSZ: str = '%Y-%m-%d %H:%M:%SZ'
 YYYYMMDD: str = '%Y-%m-%d'
 DDMMYYYY: str = '%d/%m/%Y'
 
+__FILE_NAME_TIME_FORMAT = "%Y_%m_%d_%H_%M-%S"
+
 
 def to_start_date(input_datetime: Union[datetime, None]) -> Union[datetime, None]:
     if input_datetime is None:
@@ -67,3 +69,7 @@ def utcnow() -> datetime:
 def get_datetime_with_tz(inp: datetime):
     # datetime load from db has tz info  None, set it to utc
     return inp.replace(tzinfo=inp.tzinfo or timezone.utc)
+
+
+def datetime_to_file_name_str(inp: datetime) -> str:
+    return inp.strftime(__FILE_NAME_TIME_FORMAT)

@@ -6,12 +6,22 @@ pipeline {
     }
     environment {
         SSH =  credentials('a3b7ee69-1c10-4158-86f4-5ec46e30a266')
+        ACCESS_TOKEN = credentials('vove-access-token')
     }
 
     triggers {
         githubPush()
     }
-
+    options {
+        scm {
+            git {
+                remote {
+                    url 'https://${ACCESS_TOKEN}@github.com/3T-LVTN/model.git'
+                }
+                branches(['main', 'develop'])
+            }
+        }
+    }
 
     stages {
         stage('Detect environment') {
