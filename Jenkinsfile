@@ -4,55 +4,55 @@ pipeline {
             label 'cloudythy'
         }
     }
-
-    parameters {
-        string(name: 'REPO_URLS', defaultValue: '', description: 'Comma-separated list of repository URLs')
+    environment {
+        SSH =  credentials('a3b7ee69-1c10-4158-86f4-5ec46e30a266')
     }
 
     triggers {
         githubPush()
     }
 
+
     stages {
-        stage('Check for changes in Repositories') {
+        stage('Detect environment') {
             steps {
                 script {
-                    def urls = params.REPO_URLS.split(',')
-                    def changedRepositories = []
-                    for (url in urls) {
-                        def branch = github.branch(env.CHANGE_BRANCH)
-                        def changeset = branch.commitId
-                            if (changeset != readFile(".last_${url}_${env.CHANGE_BRANCH}_changeset", "").trim()) {
-                                echo "Changes detected in ${url}:${env.CHANGE_BRANCH}. Adding to list of changed repositories."
-                                changedRepositories.add(url)
-                                writeFile file: ".last_${url}_${env.CHANGE_BRANCH}_changeset", text: "${changeset}"
-                            }
+                    def credentialsId = ''
+                    env.BRANCH_NAME = env.BRANCH_NAME ?: 'dev'
+                    def branch = env.BRANCH_NAME
+                    if (branch == 'master') {
+                        env.ENV = 'vove_bug_env_prod'
+                        env.ALEMBIC = 'alembic_vove_bug'
+                        env.CONTAINER_PREFIX = 'prod'
+                    } else if (branch == 'dev') {
+                        env.ENV = 'vove_bug_env'
+                        env.ALEMBIC = 'alembic_vove_bug'
+                        env.CONTAINER_PREFIX = 'dev'
                     }
-                    env.CHANGED_REPOS = changedRepositories.join(',')
                 }
             }
         }
-
-        stage('Build Repositories') {
-            when {
-                expression { env.CHANGED_REPOS != null }
+        stage('Clean workspace before build') {
+            steps {
+                script{
+                    sh "rm -rf model"
+                }
             }
+        }
+        stage('Build Repositories') {
             steps {
                 script {
-                    def changedRepositories = env.CHANGED_REPOS.split(',')
-                    for (url in changedRepositories) {
-                        def branch = env.CHANGE_BRANCH
-                        def changeset = github.branch(branch).commitId
-                        def directoryName = url.substring(url.lastIndexOf('/') + 1, url.lastIndexOf('.'))
-                        echo "Building ${url}:${branch} at ${changeset}"
-                        sh "git clone ${url} ${directoryName}"
-                        sh "cd ${directoryName}"
-                        sh "git checkout ${branch}"
-                        cd model 
-                        sh "chmod +x ./build.sh"
-                        sh "./build.sh"
-                        sh "cd .."
-                        sh "rm -rf ${directoryName}"
+                    def directoryName = 'model'
+                    def url = 'git@github.com:3T-LVTN/model.git'
+                    withCredentials([
+                        file(credentialsId: env.ENV, variable: 'ENV'),
+                        file(credentialsId: env.ALEMBIC, variable: 'ALEMBIC'),
+                    ]){
+                        sh "ssh-agent bash -c 'ssh-add ${env.SSH}; ssh -o StrictHostKeyChecking=no cloudythy@gmail.com@github.com;git clone ${url} -b ${env.BRANCH_NAME} ${directoryName}'"
+                        def container_prefix = env.CONTAINER_PREFIX
+                        def container_name = container_prefix.length() == 0 ? 'model' : container_prefix + "_model"
+                        sh "cp $ENV $WORKSPACE/${directoryName}"
+                        sh "cd ${directoryName}; DOCKER_BUILD_KIT=1 docker build -t ${container_name} .;docker-compose --env-file ${env.ENV} up -d "
                     }
                 }
             }
