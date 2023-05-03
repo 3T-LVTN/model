@@ -1,13 +1,11 @@
 import logging
-
 from uuid import uuid1
 from datetime import timedelta, datetime
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
+
 from app.common.constant import SUCCESS_STATUS_CODE
 from app.common.exception import ThirdServiceException
-
-
 from app.internal.dao.db import get_db_session
 from app.internal.dao.location import Location
 from app.internal.dao.time_window import TimeWindow

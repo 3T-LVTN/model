@@ -1,15 +1,14 @@
 version: '3.8'
 services:
-  redis:
-    image: redis:latest
-    container_name: redis
-    ports:
-      - '${REDIS_PORT}:6379'
   app:
-    image: model
-    container_name: model
+    image: model_${ENV}
+    container_name: model_${ENV}
+    environment:
+      - ENV=${ENV}
+    env_file:
+      - ${ENV_FILE}
     ports:
-      - ${DB_PORT}:8000
+      - ${APP_PORT}:8000
     networks:
       - vove
     logging:

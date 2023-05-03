@@ -10,6 +10,8 @@ class IFileService(ABC):
     def upload_file(self, content: bytes, file_name: Optional[str]): ...
     @abstractmethod
     def get_file_content_str(self, file_name: str) -> str: ...
+    @abstractmethod
+    def get_list_file(self, prefix: str = None) -> list[str]: ...
 
 
 class FileService(IFileService):
@@ -24,6 +26,9 @@ class FileService(IFileService):
 
     def get_file_content_str(self, file_name: str) -> str:
         return self.client.get_file_content(file_name).decode()
+
+    def get_list_file(self, prefix: str = None) -> list[str]:
+        return self.client.get_list_file(prefix)
 
 
 file_service = FileService()

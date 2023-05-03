@@ -3,7 +3,7 @@ from typing import ByteString, Optional
 import boto3.session
 from botocore.exceptions import ClientError
 
-from app.adapter.file_service.constant import S3_CLIENT_URL, S3_BUCKET_NAME
+from app.adapter.file_service.constant import S3_BUCKET_NAME
 
 
 class S3ClientAdapter:
@@ -30,4 +30,8 @@ class S3ClientAdapter:
         return file_contents
 
     def upload_file(self, content: bytes, file_name: Optional[str]):
-        self.client.put_object(Bucket=S3_BUCKET_NAME, Key=file_name, Body=content)
+        self.client.put_object(Bucket=self.bucket_name, Key=file_name, Body=content)
+
+    def get_list_file(self, prefix: str = None) -> list[str]:
+        resp = self.client.list_objects_v2(Bucket=self.bucket_name, Prefix=prefix)
+        return [resp_content["Key"] for resp_content in resp["Contents"]]

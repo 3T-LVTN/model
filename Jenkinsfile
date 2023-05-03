@@ -6,19 +6,19 @@ pipeline {
     }
     environment {
         SSH =  credentials('a3b7ee69-1c10-4158-86f4-5ec46e30a266')
+        ACCESS_TOKEN = credentials('vove-access-token')
     }
 
     triggers {
         githubPush()
     }
 
-
     stages {
         stage('Detect environment') {
             steps {
                 script {
                     def credentialsId = ''
-                    env.BRANCH_NAME = env.BRANCH_NAME ?: 'dev'
+                    env.BRANCH_NAME = env.BRANCH_NAME ?: 'master'
                     def branch = env.BRANCH_NAME
                     if (branch == 'master') {
                         env.ENV = 'vove_bug_env_prod'
@@ -51,8 +51,8 @@ pipeline {
                         sh "ssh-agent bash -c 'ssh-add ${env.SSH}; ssh -o StrictHostKeyChecking=no cloudythy@gmail.com@github.com;git clone ${url} -b ${env.BRANCH_NAME} ${directoryName}'"
                         def container_prefix = env.CONTAINER_PREFIX
                         def container_name = container_prefix.length() == 0 ? 'model' : container_prefix + "_model"
-                        sh "cp $ENV $WORKSPACE/${directoryName}"
-                        sh "cd ${directoryName}; DOCKER_BUILD_KIT=1 docker build -t ${container_name} .;docker-compose --env-file ${env.ENV} up -d "
+                        sh "cp $ENV $WORKSPACE/${directoryName}/.env"
+                        sh "cd ${directoryName}; chmod +x ./build.sh; ./build.sh --env $container_prefix --env-file .env"
                     }
                 }
             }
