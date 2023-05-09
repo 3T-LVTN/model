@@ -1,4 +1,6 @@
 from datetime import datetime, time
+import logging
+import numpy as np
 import pandas as pd
 from pandas.api.types import is_numeric_dtype
 from sqlalchemy import func, asc
@@ -38,6 +40,11 @@ class WeatherDataLoader(DataLoader):
 
         # ensure our id is not convert to float when load data, if remove this could lead to result in empty data frame when merge
         df = df.astype({col: "int" for col in ["time_window_id", "location_id", "date_time"]})
+
+        for col in df.columns:
+            if col not in NORMAL_COLUMNS:
+                continue
+            df[col] = df[col].apply(lambda x: x/np.max(df[col]) if np.max(df[col]) > 0 else 0)
         return df
 
     def preprocess_predicted_var(self, db_session: Session, df: pd.DataFrame) -> pd.DataFrame:
@@ -45,7 +52,6 @@ class WeatherDataLoader(DataLoader):
 
         # ensure our id is not convert to float when load data, if remove this could lead to result in empty data frame when merge
         df = df.astype({col: "int" for col in ["time_window_id", "location_id", "date_time"]})
-
         return df
 
     def load_train_weather_log_from_db(self, db_session: Session, time_window_id: int):

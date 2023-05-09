@@ -9,7 +9,7 @@ from app.internal.dao.synced_file import SyncedFile
 from app.middleware.router.router import CustomAPIRouter
 from app.api.response.base import BaseResponse
 from app.api.request.get_prediction_request import GetPredictionRequest
-from app.adapter.file_service.file_service_adapter import file_service
+from app.adapter.file_service import file_service_adapter
 from app.common.context import Context, get_context
 from app.internal.util.time_util import time_util
 from app.common.exception import ThirdServiceException
@@ -28,7 +28,7 @@ async def create_upload_file(file: UploadFile = File(...), db_session:Session= D
         file_service_file_name = f"{file.filename}_{time_util.datetime_to_file_name_str(time_util.now())}_{str(uuid.uuid4())}"
         synced_file_repo.save(db_session, SyncedFile(file_name= file_service_file_name))
         content = bytes(content, encoding='utf-8') if isinstance(content, str) else content
-        file_service.upload_file(content=content, file_name=file_service_file_name)
+        file_service_adapter.file_service.upload_file(content=content, file_name=file_service_file_name)
     except ClientError as e:
         logging.info(f"file service error: {e}")
         raise ThirdServiceException()

@@ -18,14 +18,16 @@ pipeline {
             steps {
                 script {
                     def credentialsId = ''
-                    env.BRANCH_NAME = env.BRANCH_NAME ?: 'master'
-                    def branch = env.BRANCH_NAME
-                    if (branch == 'master') {
+                    env.GIT_BRANCH = env.GIT_BRANCH ?env.GIT_BRANCH: 'origin/dev'
+                    def branch = env.GIT_BRANCH
+                    if (branch == 'origin/master') {
+                        env.BRANCH = "master"
                         env.ENV = 'vove_bug_env_prod'
                         env.ALEMBIC = 'alembic_vove_bug'
                         env.CONTAINER_PREFIX = 'prod'
-                    } else if (branch == 'dev') {
+                    } else if (branch == 'origin/dev') {
                         env.ENV = 'vove_bug_env'
+                        env.BRANCH = "dev"
                         env.ALEMBIC = 'alembic_vove_bug'
                         env.CONTAINER_PREFIX = 'dev'
                     }
@@ -48,7 +50,8 @@ pipeline {
                         file(credentialsId: env.ENV, variable: 'ENV'),
                         file(credentialsId: env.ALEMBIC, variable: 'ALEMBIC'),
                     ]){
-                        sh "ssh-agent bash -c 'ssh-add ${env.SSH}; ssh -o StrictHostKeyChecking=no cloudythy@gmail.com@github.com;git clone ${url} -b ${env.BRANCH_NAME} ${directoryName}'"
+                        sh "echo $env.GIT_LOCAL_BRANCH"
+                        sh "ssh-agent bash -c 'ssh-add ${env.SSH}; ssh -o StrictHostKeyChecking=no cloudythy@gmail.com@github.com;git clone ${url} -b ${env.BRANCH} ${directoryName}'"
                         def container_prefix = env.CONTAINER_PREFIX
                         def container_name = container_prefix.length() == 0 ? 'model' : container_prefix + "_model"
                         sh "cp $ENV $WORKSPACE/${directoryName}/.env"
