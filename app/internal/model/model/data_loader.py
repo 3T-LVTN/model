@@ -1,4 +1,5 @@
 from datetime import datetime, time
+import logging
 import pandas as pd
 from pandas.api.types import is_numeric_dtype
 from sqlalchemy import func, asc
@@ -115,6 +116,7 @@ class WeatherDataLoader(DataLoader):
             db_session.connection(),
             coerce_float=False
         )
+        logging.info(df.columns)
         df = self.preprocess_weather_log(db_session, df)
         return df[NORMAL_COLUMNS+[RANDOM_FACTOR_COLUMN]]
 
