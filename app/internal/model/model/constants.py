@@ -1,13 +1,20 @@
 import os
 NORMAL_COLUMNS = [
-    'tempmax',
-    'tempmin',
-    'temp',
-    'dew',
-    'humidity',
-    'precip',
-    'precipprob',
-    'precipcover'
+    "minimum_temperature",
+    "maximum_temperature",
+    "temperature",
+    "dew_point",
+    "relative_humidity",
+    "heat_index",
+    "wind_speed",
+    "wind_gust",
+    "wind_direction",
+    "wind_chill",
+    "precipitation",
+    "precipitation_cover",
+    "visibility",
+    "cloud_cover",
+    "sea_level_pressure",
 ]
 
 RANDOM_FACTOR_COLUMN = "location_id"

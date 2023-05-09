@@ -12,7 +12,7 @@ class LocationFilter(BaseModel):
     latitude: float = None
 
 
-class LocationRepo(BaseRepo):
+class LocationRepo(BaseRepo[Location]):
     def _build_filter_query(self, query: Query, filter: LocationFilter) -> Query:
         if filter.latitude is not None:
             query = query.where(func.abs(Location.latitude - filter.latitude) < FLOATING_POINT_THRESHOLD)
