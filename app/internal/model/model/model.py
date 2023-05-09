@@ -9,7 +9,7 @@ import statsmodels.formula.api as smf
 from sqlalchemy.orm import Session
 import os
 
-from app.adapter.file_service.file_service_adapter import file_service
+from app.adapter.file_service import file_service_adapter
 from app.internal.dao.db import get_db_session
 from app.internal.model.model.constants import FORMULA, PREDICTED_VAR, VC_FORMULA
 from app.internal.model.model.metric import MetricsProvider, NormalMetricsProvider
@@ -45,7 +45,7 @@ class Model(ABC):
         # try to load model
         try:
             logging.info(self.file_path)
-            data = file_service.get_file_content(self.file_path)
+            data = file_service_adapter.file_service.get_file_content(self.file_path)
             self.model = pickle.loads(data)
             logging.info("load model success")
         except EOFError:
@@ -61,7 +61,7 @@ class Model(ABC):
 
     def save(self, model: Any):
         self.model = model
-        file_service.upload_file(pickle.dumps(self.model), self.file_path)
+        file_service_adapter.file_service.upload_file(pickle.dumps(self.model), self.file_path)
 
 
 class Nb2MosquittoModel(Model):
