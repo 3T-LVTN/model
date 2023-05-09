@@ -1,12 +1,5 @@
 version: '3.8'
 services:
-  redis:
-    image: redis:latest
-    container_name: redis_${ENV}
-    env_file:
-      - ${ENV_FILE}
-    ports:
-      - '${REDIS_PORT}:6379'
   app:
     image: model_${ENV}
     container_name: model_${ENV}
