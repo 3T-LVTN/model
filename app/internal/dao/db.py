@@ -12,7 +12,7 @@ engine_options = {
 engine = create_engine(
     env_var.DB_URI, pool_pre_ping=True, echo=None, **engine_options
 )  # Set time zone UTC
-DBSession = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+DBSession = sessionmaker(autocommit=True, autoflush=False, bind=engine)
 
 
 def get_db_session() -> Generator[session.Session, None, None]:
