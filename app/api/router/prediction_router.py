@@ -12,7 +12,7 @@ prediction_router = CustomAPIRouter()
 
 
 @prediction_router.post("/prediction", response_model=GetPredictionResponse)
-async def get_prediction(
+def get_prediction(
         request: GetPredictionRequest, db_session: Session = Depends(db.get_db_session),
         ctx: Context = Depends(get_context)):
 

@@ -122,10 +122,9 @@ class Nb2MosquittoModel(Model):
         self.save(result)
         return result
 
-    def predict(self, longitude: float, latitude: float, date_time: int, db_session: Session = None, *args, **
-                kwargs) -> MosquittoNormalOutput:
-        if db_session is None:
-            db_session = next(get_db_session())
+    def predict(
+            self, longitude: float, latitude: float, date_time: int, db_session: Session = None,
+            *args, **kwargs) -> MosquittoNormalOutput:
         inp = self.data_loader.get_history_input_data(db_session, longitude, latitude, date_time)
         model = self.get_model()
         count = model.predict(inp)

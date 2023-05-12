@@ -20,11 +20,15 @@ _GET_WEATHER_LOG_END_POINT = r"VisualCrossingWebServices/rest/services/weatherda
 _DATE_TIME_FORMAT = "%Y-%m-%d"
 _RESP_DATE_TIME_FORMAT = r'%m/%d/%Y'
 _TIME_DELTA = 1
-
+_VISUAL_CROSSING_EXCEED_LIMIT_MSG = "exceeded the maximum number of daily result records"
 
 NOT_COMMA_OR_DOUBLE_QUOTE = r'[^,"]'
 STRING_INSIDE_DOUBLE_QUOTE = r'"[^"]*"'
 COMMA_OUTSIDE_OF_DOUBLE_QUOTE_PATTERN = r'\s*,\s*(?=(?:[^"]*"[^"]*")*[^"]*$)'
+
+
+class ExceedLimitException(Exception):
+    ...
 
 
 class GetWeatherRequest(CamelModel):
@@ -87,6 +91,8 @@ class VisualCrossingAdapter(BaseAdapter):
         self.current_key = next(API_KEY_GENERATOR)
 
     def _clean_header(self, header: str) -> list[str]:
+        if _VISUAL_CROSSING_EXCEED_LIMIT_MSG in header:
+            raise ExceedLimitException()
         data_field_list = header.split(COMMA)
         # transform header to snake case
         return [data_field.strip().lower().replace(WHITE_SPACE, UNDERSCORE) for data_field in data_field_list]
@@ -99,13 +105,18 @@ class VisualCrossingAdapter(BaseAdapter):
     def _format_resp_data(self, data: Any) -> GetWeatherLogResponseData:
         try:
             content = codecs.decode(data, 'utf-8')
+            logging.info("visual reponse content: ", content)
             content = content.split("\n")
             # TODO: improve performance by run in parralel below
             resp_header = self._clean_header(content[0])
-            resp_content = self._format_resp(content[1])
-            resp_dict = dict(zip(resp_header, resp_content))
-            date_time = resp_dict.pop("date_time").strip('"')
-            date_time = datetime.strptime(date_time, _RESP_DATE_TIME_FORMAT)
+            try:
+                resp_content = self._format_resp(content[1])
+                resp_dict = dict(zip(resp_header, resp_content))
+                date_time = resp_dict.pop("date_time").strip('"')
+                date_time = datetime.strptime(date_time, _RESP_DATE_TIME_FORMAT)
+            except IndexError:
+                logging.info("visual crossing has no data for this place, continue")
+                return GetWeatherLogResponseData()
         except ValueError:
             logging.info("visual crossing has no data for this location")
             raise ThirdServiceException()
@@ -135,17 +146,25 @@ class VisualCrossingAdapter(BaseAdapter):
 
     def get_single_weather_log_data(self, req: _GetWeatherRequest) -> GetWeatherLogResponse:
         base_resp = self.get(end_point=_GET_WEATHER_LOG_END_POINT, params=req)
-        if base_resp.code == SUCCESS_STATUS_CODE:
-            data = self._format_resp_data(base_resp.data)
-            return GetWeatherLogResponse(code=base_resp.code, message=base_resp.message, data=[data])
-        if self.current_key is None:
-            # retry in case we run out of api key
-            try:
-                # try to get next key
-                self.current_key = next(API_KEY_GENERATOR)
-            except StopIteration:
-                # if stop iteration mean we run out of api key, return empty success code so we stop and save record to db
-                return GetWeatherLogResponse(code=SUCCESS_STATUS_CODE, data=[])
+        try:
+            # in case we run out of api key, they return success status with message, they only return error code when something occur
+            # handle detect out of api key in format resp data function
+            if base_resp.code == SUCCESS_STATUS_CODE:
+
+                data = self._format_resp_data(base_resp.data)
+                return GetWeatherLogResponse(code=base_resp.code, message=base_resp.message, data=[data])
+            else:
+                logging.info("visual crossing encounter error")
+                raise ThirdServiceException()
+        except ExceedLimitException:
+            logging.info("out of api for this key, retry with other key")
+        # retry in case we run out of api key
+        try:
+            # try to get next key
+            self.current_key = next(API_KEY_GENERATOR)
+        except StopIteration:
+            # if stop iteration mean we run out of api key, return empty success code so we stop and save record to db
+            return GetWeatherLogResponse(code=SUCCESS_STATUS_CODE, data=[])
         # retry this req
         req.key = self.current_key
         base_resp = self.get(end_point=_GET_WEATHER_LOG_END_POINT, params=req)

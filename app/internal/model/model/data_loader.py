@@ -106,7 +106,6 @@ class WeatherDataLoader(DataLoader):
                 end_date_time=time_util.to_end_date_timestamp(date_time),
             )
             weather_log_resp = visual_crossing_adapter.get_weather_log(req)
-            weather_log_resp = visual_crossing_adapter.get_weather_log(req)
             if weather_log_resp.code != SUCCESS_STATUS_CODE:
                 raise ThirdServiceException()
             data = weather_log_resp.data[0]

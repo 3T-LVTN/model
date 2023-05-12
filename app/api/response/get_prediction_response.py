@@ -8,7 +8,7 @@ class PredictionData(CamelModel):
     idx: int = None
     long: float = None
     lat: float = None
-    weight: int = None  # None mean no prediction for this one
+    weight: float = None  # None mean no prediction for this one
 
 
 class GetPredictionResponseData(CamelModel):
