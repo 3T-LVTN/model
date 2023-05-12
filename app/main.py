@@ -6,10 +6,10 @@ import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.adapter.base import BaseResponse
 from app.common.exception import ThirdServiceException
-
 from app.config import env_var
 from app.middleware.context_middleware import CustomContextMiddleware
 from app.internal.celery.celery import celery_app  # noqa #import this so we can start celery when we start app
@@ -24,6 +24,13 @@ logging.config.dictConfig(env_var.LOGGING_CONFIG)
 def get_application() -> FastAPI:
     app = FastAPI(docs_url="/docs", redoc_url="/redoc", openapi_url="/openapi.json")
 
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
     # add middleware to set context
     app.add_middleware(CustomContextMiddleware)
     app.include_router(router, prefix="/api")

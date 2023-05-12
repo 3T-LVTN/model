@@ -22,6 +22,7 @@ def get_prediction(ctx: Context, model: Nb2MosquittoModel, request: GetPredictio
             logging.info("third party has no data for this locations")
             continue
         if prediction is not None and not np.isinf(prediction.count):
+            logging.info(f"prdict for location idx {location.idx} is {prediction}")
             result.append(PredictionDTO(idx=location.idx, weight=prediction.count))
         else:
             logging.info(f"cannot predict for location idx: {location.idx}")

@@ -58,4 +58,3 @@ def get_data(db_session: Session):
                 weather_logs = get_weather_log_model(time_window, location)
                 # write new data to csv
                 db_session.add_all(weather_logs)
-                db_session.commit()
