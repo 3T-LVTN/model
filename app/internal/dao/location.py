@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 class Location(BaseModel):
     __tablename__ = "location"
 
-    longitude = Column(Float)
-    latitude = Column(Float)
+    longitude = Column(Float, index=True)
+    latitude = Column(Float, index=True)
 
     weather_log: Mapped[list['WeatherLog']] = relationship(viewonly=True)

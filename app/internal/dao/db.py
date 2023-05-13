@@ -21,5 +21,4 @@ def get_db_session() -> Generator[session.Session, None, None]:
         db_session = DBSession()
         yield db_session
     finally:
-        logging.info(db_session)
         db_session.close()

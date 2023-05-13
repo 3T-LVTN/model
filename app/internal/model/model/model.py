@@ -128,17 +128,20 @@ class Nb2MosquittoModel(Model):
         self.save(result)
         return result
 
-    def _get_nearest_location(self, db_session: Session, longitude: float, lattitude: float) -> Location:
-        distances = func.pow(Location.longitude - longitude, 2) + func.pow(Location.latitude - lattitude, 2)
-        location = db_session.query(Location).order_by(distances).first()
+    def _get_nearest_location(self, db_session: Session, longitude: float, latitude: float) -> Location:
+        location = db_session.query(Location).where(
+            Location.longitude < longitude+LOCATION_DISTANCE_THRESHOLD,
+            Location.longitude > longitude-LOCATION_DISTANCE_THRESHOLD,
+            Location.latitude < latitude+LOCATION_DISTANCE_THRESHOLD,
+            Location.latitude > latitude-LOCATION_DISTANCE_THRESHOLD,
+        ).all()
+        location.sort(key=lambda x: (x.longitude-longitude) + (x.latitude-latitude))
 
-        return location
+        return location[0]
 
     def get_input_location(self, db_session: Session, longitude: float, latitude: float) -> Location:
         location = self._get_nearest_location(db_session, longitude, latitude)
-        if location is None or (
-                pow(location.latitude - latitude, 2) + pow(location.longitude - longitude, 2) >
-                pow(LOCATION_DISTANCE_THRESHOLD, 2)):
+        if location is None:
             # if there is no location is valid
             location = Location(longitude=longitude, latitude=latitude)
             LocationRepo.save(db_session, location)
