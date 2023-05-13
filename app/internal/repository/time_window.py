@@ -12,7 +12,7 @@ class TimeWindowFilter(BaseModel):
     eq_end_date_ts: int = None    # filter max ts is in the same date with that time window end ts
 
 
-class TimeWindowRepo(BaseRepo):
+class TimeWindowRepo(BaseRepo[TimeWindow]):
     def _build_query(self, base_query: Query, filter: TimeWindowFilter) -> Query:
         query = base_query
         if filter.min_datetime_ts is not None:

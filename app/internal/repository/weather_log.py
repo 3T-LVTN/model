@@ -15,7 +15,7 @@ class WeatherLogFilter(BaseModel):
     time_window_sliding_size: int = None
 
 
-class WeatherLogRepo(BaseRepo):
+class WeatherLogRepo(BaseRepo[WeatherLog]):
     def _build_filter_query(self, query: Query, filter: WeatherLogFilter) -> Query:
         if filter.avg_temp is not None:
             query = query.filter(WeatherLog.temperature == filter.avg_temp)

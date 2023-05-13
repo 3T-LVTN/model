@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session, Query
 from pydantic import BaseModel
 
 
-class PredictedVarRepo(BaseRepo):
+class PredictedVarRepo(BaseRepo[PredictedVar]):
     ...
 
 

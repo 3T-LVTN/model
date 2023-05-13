@@ -125,4 +125,4 @@ class WeatherDataLoader(DataLoader):
         '''return location id and input df for prediction'''
         weather_log = self._get_weather_log(db_session, location, date_time)
 
-        return self.get_history_input_df(db_session, weather_log)
+        return location.id, self.get_history_input_df(db_session, weather_log)
