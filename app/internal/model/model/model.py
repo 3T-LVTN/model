@@ -135,8 +135,10 @@ class Nb2MosquittoModel(Model):
             Location.latitude < latitude+LOCATION_DISTANCE_THRESHOLD,
             Location.latitude > latitude-LOCATION_DISTANCE_THRESHOLD,
         ).all()
-        location.sort(key=lambda x: (x.longitude-longitude) + (x.latitude-latitude))
+        if len(location) == 0:
+            return None
 
+        location.sort(key=lambda x: (x.longitude-longitude) + (x.latitude-latitude))
         return location[0]
 
     def get_input_location(self, db_session: Session, longitude: float, latitude: float) -> Location:
@@ -151,7 +153,6 @@ class Nb2MosquittoModel(Model):
             self, longitude: float, latitude: float, date_time: int, db_session: Session = None,
             *args, **kwargs) -> MosquittoNormalOutput:
         location = self.get_input_location(db_session, longitude, latitude)
-        inp = self.data_loader.get_history_input_data(db_session, location, date_time)
         history_predict = predicted_log_repo.first(
             db_session,
             filter=PredictedLogFilter(
@@ -164,7 +165,7 @@ class Nb2MosquittoModel(Model):
             return MosquittoNormalOutput(
                 count=history_predict.value
             )
-
+        inp = self.data_loader.get_history_input_data(db_session, location, date_time)
         model = self.get_model()
         count = model.predict(inp)
 

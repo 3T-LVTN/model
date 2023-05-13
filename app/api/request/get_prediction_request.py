@@ -8,5 +8,5 @@ class PredictLocation(CamelModel):
 
 
 class GetPredictionRequest(CamelModel):
-    predictDate: int  # timestamp
+    predict_date: int  # timestamp
     locations: list[PredictLocation]

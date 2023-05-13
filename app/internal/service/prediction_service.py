@@ -17,7 +17,7 @@ def get_prediction(ctx: Context, model: Nb2MosquittoModel, request: GetPredictio
     for location in request.locations:
         try:
             prediction = model.predict(longitude=location.long, latitude=location.lat,
-                                       date_time=request.predictDate, db_session=db_session)
+                                       date_time=request.predict_date, db_session=db_session)
         except ThirdServiceException:
             logging.info("third party has no data for this locations")
             continue

@@ -46,7 +46,7 @@ class WeatherDataLoader(DataLoader):
         for col in df.columns:
             if col not in NORMAL_COLUMNS:
                 continue
-            df[col] = df[col].apply(lambda x: x/np.max(df[col]) if np.max(df[col]) > 0 else 0)
+            df[col] = df[col].apply(lambda x: x/np.max(df[col]) if np.max(df[col]) > 0 else 0)  # transform to 0-1 range
         return df
 
     def preprocess_predicted_var(self, db_session: Session, df: pd.DataFrame) -> pd.DataFrame:
@@ -111,11 +111,7 @@ class WeatherDataLoader(DataLoader):
         return weather_log
 
     def get_history_input_df(self, db_session: Session, weather_log: WeatherLog) -> pd.DataFrame:
-        df = pd.read_sql_query(
-            db_session.query(WeatherLog).filter(WeatherLog.id == weather_log.id).statement,
-            db_session.connection(),
-            coerce_float=False
-        )
+        df = pd.DataFrame(weather_log.as_dict(), index=[0])
         df = self.preprocess_weather_log(db_session, df)
         return df[NORMAL_COLUMNS+[RANDOM_FACTOR_COLUMN]]
 

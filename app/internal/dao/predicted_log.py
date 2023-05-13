@@ -16,7 +16,7 @@ class PredictedLog(BaseModel):
     __tablename__ = "predicted_log"
 
     # foreignkey
-    location_id: int = Column(Integer, ForeignKey("location.id"))
+    location_id: int = Column(Integer, ForeignKey("location.id"), index=True)
 
     # data column
     value: int = Column(Integer)
