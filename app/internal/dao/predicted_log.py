@@ -17,7 +17,6 @@ class PredictedLog(BaseModel):
 
     # foreignkey
     location_id: int = Column(Integer, ForeignKey("location.id"))
-    time_window_id: int = Column(Integer, ForeignKey("time_window.id"))
 
     # data column
     value: int = Column(Integer)
@@ -25,6 +24,5 @@ class PredictedLog(BaseModel):
 
     ######## relationship ############
     location: Mapped['Location'] = relationship("Location", foreign_keys=[location_id], viewonly=True)
-    time_window: Mapped['TimeWindow'] = relationship("TimeWindow", foreign_keys=[time_window_id], viewonly=True)
 
     UniqueConstraint("location_id", "time_window_id")

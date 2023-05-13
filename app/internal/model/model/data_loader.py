@@ -23,8 +23,10 @@ from app.internal.repository.location import location_repo
 class DataLoader(ABC):
     @abstractmethod
     def get_train_data(self, *args, **kwargs) -> pd.DataFrame: ...
+
     @abstractmethod
-    def get_history_input_data(self,  *args, **kwargs) -> pd.DataFrame: ...
+    def get_history_input_data(self, db_session: Session, location: Location, date_time: int, *args, **
+                               kwargs) -> pd.DataFrame: ...
 
 
 def get_rename_mapper_for_sqlalchemy_select(table_name: str, column_names: list[str]) -> dict[str, str]:
@@ -87,12 +89,6 @@ class WeatherDataLoader(DataLoader):
 
         return merged_df[NORMAL_COLUMNS+[PREDICTED_VAR]+[RANDOM_FACTOR_COLUMN]]
 
-    def _get_nearest_location(self, db_session: Session, longitude: float, lattitude: float) -> Location:
-        distances = func.pow(Location.longitude - longitude, 2) + func.pow(Location.latitude - lattitude, 2)
-        location = db_session.query(Location).order_by(distances).first()
-
-        return location
-
     def _get_weather_log(self, db_session: Session, location: Location, date_time: int) -> WeatherLog:
         query = db_session.query(WeatherLog).where(WeatherLog.location_id == location.id,
                                                    WeatherLog.date_time == time_util.to_start_date_timestamp(date_time))
@@ -123,15 +119,9 @@ class WeatherDataLoader(DataLoader):
         df = self.preprocess_weather_log(db_session, df)
         return df[NORMAL_COLUMNS+[RANDOM_FACTOR_COLUMN]]
 
-    def get_history_input_data(self, db_session: Session, longitude: float, latitude: float, date_time: int, *args, **
+    def get_history_input_data(self, db_session: Session, location: Location, date_time: int, *args, **
                                kwargs) -> pd.DataFrame:
-        location = self._get_nearest_location(db_session, longitude, latitude)
-        if location is None or (
-                pow(location.latitude - latitude, 2) + pow(location.longitude - longitude, 2) >
-                pow(LOCATION_DISTANCE_THRESHOLD, 2)):
-            # if there is no location is valid
-            location = Location(longitude=longitude, latitude=latitude)
-            location_repo.save(db_session, location)
+        '''return location id and input df for prediction'''
         weather_log = self._get_weather_log(db_session, location, date_time)
 
-        return self.get_history_input_df(db_session, weather_log)
+        return location.id, self.get_history_input_df(db_session, weather_log)
