@@ -36,7 +36,7 @@ class BaseModel(Base):
     __abstract__ = True
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    created_at = Column(Integer, default=lambda: int(datetime.now().timestamp()))
+    created_at = Column(Integer, default=lambda: int(datetime.now().timestamp()), index=True)
     updated_at = Column(
         Integer, default=lambda: int(datetime.now().timestamp()),
         onupdate=lambda: int(datetime.now().timestamp()))

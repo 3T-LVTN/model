@@ -158,8 +158,6 @@ class Nb2MosquittoModel(Model):
             )
         )
         if history_predict is not None:
-            logging.info(
-                f"longitude: {longitude}, latitude: {latitude} has predict at {time_util.ts_to_datetime(date_time)} has {count}")
             return MosquittoNormalOutput(
                 count=history_predict.value
             )
@@ -176,8 +174,6 @@ class Nb2MosquittoModel(Model):
             )
         )
 
-        logging.info(
-            f"longitude: {longitude}, latitude: {latitude} has predict at {time_util.ts_to_datetime(date_time)} has {count}")
         return MosquittoNormalOutput(
             count=count
         )
