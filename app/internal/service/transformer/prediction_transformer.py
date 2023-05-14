@@ -20,6 +20,6 @@ class PredictionTransformer:
             else:
                 # we modified our prediction data to improve contrast between district
                 prediction_data = PredictionData(
-                    idx=location.idx, long=location.long, lat=location.lat, weight=(prediction.weight-min_weight+1)*10)
+                    idx=location.idx, long=location.long, lat=location.lat, weight=prediction.weight-min_weight+1)
                 response.data.available_locations.append(prediction_data)
         return response

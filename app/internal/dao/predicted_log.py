@@ -1,5 +1,5 @@
 from typing import TYPE_CHECKING
-from sqlalchemy import Column, Integer, String, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, FLOAT, Double, Integer, String, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship, Mapped
 
 from app.internal.dao.base import BaseModel
@@ -19,7 +19,7 @@ class PredictedLog(BaseModel):
     location_id: int = Column(Integer, ForeignKey("location.id"), index=True)
 
     # data column
-    value: int = Column(Integer)
+    value: float = Column(Double)
     model_file_path: str = Column(String(50))
 
     ######## relationship ############
