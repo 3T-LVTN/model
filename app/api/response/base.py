@@ -4,6 +4,11 @@ from fastapi_camelcase import CamelModel
 from app.common.constant import SUCCESS_STATUS_CODE, SUCCESS_STATUS_MSG
 
 
+class Geometry(CamelModel):
+    lat: float
+    lng: float
+
+
 class BaseResponse(CamelModel):
     class Config:
         anystr_strip_whitespace = True

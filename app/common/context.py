@@ -15,7 +15,7 @@ class Context(dict):
     method: str = ""
     logger: LoggerAdapter
 
-    def extract_logger(self, tag: str, name: str) -> LoggerAdapter:
+    def extract_logger(self, tag: str = "", name: str = "") -> LoggerAdapter:
         def attach_logger_ctx():
             try:
                 old_logger = self.logger

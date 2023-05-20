@@ -6,11 +6,15 @@ from app.internal.repository.base import BaseRepo
 from sqlalchemy.orm import Session, Query
 from pydantic import BaseModel
 
+from app.internal.util.time_util import time_util
+
 
 class WeatherLogFilter(BaseModel):
     avg_temp: int = None
     max_temp: int = None
     min_temp: int = None
+    time_gte: int = None
+    time_lte: int = None
     # relationship
     time_window_sliding_size: int = None
 
@@ -23,6 +27,12 @@ class WeatherLogRepo(BaseRepo[WeatherLog]):
             query = query.filter(WeatherLog.maximum_temperature == filter.max_temp)
         if filter.min_temp is not None:
             query = query.filter(WeatherLog.minimum_temperature == filter.min_temp)
+        if filter.time_gte is not None:
+            filter_time = time_util.to_start_date_timestamp(filter.time_gte)
+            query = query.filter(WeatherLog.date_time >= filter_time)
+        if filter.time_lte is not None:
+            filter_time = time_util.to_end_date_timestamp(filter.time_lte)
+            query = query.filter(WeatherLog.date_time <= filter_time)
         if filter.time_window_sliding_size is not None:
             query = query.filter(WeatherLog.time_window.has(
                 TimeWindow.sliding_size == filter.time_window_sliding_size))
