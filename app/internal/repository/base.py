@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Generic, List, Optional, Type, TypeVar
-
+from pydantic import BaseModel as BaseData
 from sqlalchemy import func
 from sqlalchemy.orm import Query, Session
 
@@ -8,7 +8,15 @@ from app.internal.dao.base import BaseModel, Page
 from app.common.constant import *
 
 ModelType = TypeVar("ModelType")
-SimpleFilterType = TypeVar("SimpleFilterType")
+
+
+class BaseFilterType(Generic[ModelType], BaseData):
+    ids: list[str] = None
+    created_date: int = None
+    updated_date: int = None
+
+
+SimpleFilterType = TypeVar("SimpleFilterType", bound=BaseFilterType)
 
 
 class BaseRepo(Generic[ModelType]):

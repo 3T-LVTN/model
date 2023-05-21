@@ -7,6 +7,7 @@ from sqlalchemy.orm import sessionmaker, session
 from app.config import env_var
 
 engine_options = {
+    "pool_size": 20,
     "max_overflow": 0,
 }
 engine = create_engine(

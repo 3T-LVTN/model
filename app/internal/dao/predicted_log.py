@@ -19,7 +19,7 @@ class PredictedLog(BaseModel):
     location_id: int = Column(Integer, ForeignKey("location.id"), index=True)
 
     # data column
-    value: float = Column(Double)
+    value = Column(Double)
     model_file_path: str = Column(String(50))
 
     ######## relationship ############

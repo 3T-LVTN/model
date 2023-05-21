@@ -1,14 +1,14 @@
 from app.internal.dao.base import Page
 from app.internal.dao.time_window import TimeWindow
 from app.internal.dao.predicted_log import PredictedLog
-from app.internal.repository.base import BaseRepo
+from app.internal.repository.base import BaseRepo, BaseFilterType
 
 from sqlalchemy.orm import Session, Query
 from pydantic import BaseModel
 from sqlalchemy import func, asc, desc
 
 
-class PredictedLogFilter(BaseModel):
+class PredictedLogFilter(BaseFilterType):
     location_id: int = None
     created_at_lt: int = None
     created_at_gt: int = None
@@ -25,8 +25,7 @@ class PredictedLogRepo(BaseRepo):
             query = query.where(PredictedLog.created_at < filter.created_at_lt)
         if filter.created_at_gt is not None:
             query = query.where(PredictedLog.created_at > filter.created_at_gt)
-        if filter.time_window_id is not None:
-            query = query.where(PredictedLog.time_window_id > filter.time_window_id)
+
         return query
 
     def first(self, db_session: Session, filter: PredictedLogFilter) -> PredictedLog:

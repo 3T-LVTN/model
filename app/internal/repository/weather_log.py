@@ -1,7 +1,7 @@
 from app.internal.dao.base import Page
 from app.internal.dao.time_window import TimeWindow
 from app.internal.dao.weather_log import WeatherLog
-from app.internal.repository.base import BaseRepo
+from app.internal.repository.base import BaseFilterType, BaseRepo
 
 from sqlalchemy.orm import Session, Query
 from pydantic import BaseModel
@@ -9,7 +9,7 @@ from pydantic import BaseModel
 from app.internal.util.time_util import time_util
 
 
-class WeatherLogFilter(BaseModel):
+class WeatherLogFilter(BaseFilterType):
     avg_temp: int = None
     max_temp: int = None
     min_temp: int = None
@@ -17,6 +17,7 @@ class WeatherLogFilter(BaseModel):
     time_lte: int = None
     # relationship
     time_window_sliding_size: int = None
+    location_ids: list[int] = None
 
 
 class WeatherLogRepo(BaseRepo[WeatherLog]):
@@ -33,6 +34,8 @@ class WeatherLogRepo(BaseRepo[WeatherLog]):
         if filter.time_lte is not None:
             filter_time = time_util.to_end_date_timestamp(filter.time_lte)
             query = query.filter(WeatherLog.date_time <= filter_time)
+        if filter.location_ids is not None:
+            query = query.filter(WeatherLog.location_id.in_(filter.location_ids))
         if filter.time_window_sliding_size is not None:
             query = query.filter(WeatherLog.time_window.has(
                 TimeWindow.sliding_size == filter.time_window_sliding_size))

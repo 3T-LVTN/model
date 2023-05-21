@@ -1,13 +1,13 @@
-from app.internal.dao.location import Location
 from pydantic import BaseModel
-from app.internal.repository.base import BaseRepo, Page
 from sqlalchemy.orm import Session, Query
 from sqlalchemy import func
 
 from app.internal.repository.constants import FLOATING_POINT_THRESHOLD
+from app.internal.dao.location import Location
+from app.internal.repository.base import BaseRepo, Page, BaseFilterType
 
 
-class LocationFilter(BaseModel):
+class LocationFilter(BaseFilterType):
     longitude: float = None
     latitude: float = None
 

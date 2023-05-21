@@ -19,7 +19,7 @@ from app.internal.model.model.constants import FORMULA, PREDICTED_VAR, VC_FORMUL
 from app.internal.model.model.metric import MetricsProvider, NormalMetricsProvider
 from app.internal.model.model.output import Output, MosquittoNormalOutput
 from app.internal.model.model.data_loader import DataLoader, WeatherDataLoader
-from app.internal.repository.location import LocationRepo
+from app.internal.repository.location import LocationRepo, location_repo
 from app.internal.repository.predicted_log import PredictedLogFilter, predicted_log_repo
 from app.internal.util.time_util import time_util
 
@@ -146,13 +146,23 @@ class Nb2MosquittoModel(Model):
         if location is None:
             # if there is no location is valid
             location = Location(longitude=longitude, latitude=latitude)
-            LocationRepo.save(db_session, location)
+            location_repo.save(db_session, location)
         return location
 
     def predict(
             self, longitude: float, latitude: float, date_time: int, db_session: Session = None,
             *args, **kwargs) -> MosquittoNormalOutput:
         location = self.get_input_location(db_session, longitude, latitude)
+        return self.get_predict_with_location_model(location=location, date_time=date_time, db_session=db_session)
+
+    def predict_with_location_id(
+            self, *, location_id: int, date_time: int, db_session: Session) -> MosquittoNormalOutput:
+        location = location_repo.get_by_id(db_session, location_id)
+        return self.get_predict_with_location_model(location=location, date_time=date_time, db_session=db_session)
+
+
+    def get_predict_with_location_model(
+            self, location: Location, date_time: int, db_session: Session) -> MosquittoNormalOutput:
         history_predict = predicted_log_repo.first(
             db_session,
             filter=PredictedLogFilter(

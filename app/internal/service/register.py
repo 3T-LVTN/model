@@ -1,4 +1,5 @@
 from abc import abstractmethod
+import asyncio
 from typing import Protocol
 from sqlalchemy.orm import Session
 
@@ -44,8 +45,9 @@ class Service(IService):
 
     def get_weather_summary(self, ctx: Context, request: GetWeatherSummaryRequest) -> GetWeatherSummaryResponse:
         logger = ctx.extract_logger()
-        weather_summary_dto = get_weather_summary(ctx, request)
-        return super().get_weather_summary(ctx, request)
+        weather_summary_dto = asyncio.run(get_weather_summary(ctx, request))
+        logger.info(weather_summary_dto)
+        return self.transformer.summary_dto_to_summary_response(weather_summary_dto)
 
     def get_weather_detail(self, ctx: Context, request: GetWeatherDetailRequest) -> GetWeatherDetailResponse:
         return super().get_weather_detail(ctx, request)

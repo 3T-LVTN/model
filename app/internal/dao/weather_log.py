@@ -12,8 +12,8 @@ class WeatherLog(BaseModel):
     __tablename__ = "weather_log"
 
     # foreignkey
-    location_id: int = Column(Integer, ForeignKey("location.id"), index=True)
-    time_window_id: int = Column(Integer, ForeignKey("time_window.id"), index=True)
+    location_id = Column(Integer, ForeignKey("location.id"), index=True)
+    time_window_id = Column(Integer, ForeignKey("time_window.id"), index=True)
 
     # data column
     date_time: int = Column(Integer, index=True)  # timestamp

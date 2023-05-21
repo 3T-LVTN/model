@@ -14,7 +14,7 @@ class ThirdPartyLocation(BaseModel):
     '''
     __tablename__ = "third_party_location"
 
-    location_code: str = Column(type_=String(255), index=True, unique=True)
-    location_id: int = Column(Integer, ForeignKey("location.id"), index=True)
+    location_code = Column(type_=String(255), index=True, unique=True)
+    location_id = Column(Integer, ForeignKey("location.id"), index=True)
 
     location: Mapped['Location'] = relationship("Location", foreign_keys=[location_id], viewonly=True)

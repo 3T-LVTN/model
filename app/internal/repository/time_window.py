@@ -1,11 +1,12 @@
 from sqlalchemy.orm import Session, Query
 from pydantic import BaseModel
+
 from app.internal.dao.time_window import TimeWindow
-from app.internal.repository.base import BaseRepo
+from app.internal.repository.base import BaseRepo, BaseFilterType
 from app.internal.util.time_util import time_util
 
 
-class TimeWindowFilter(BaseModel):
+class TimeWindowFilter(BaseFilterType):
     min_datetime_ts: int = None   # filter timewindow has start ts >= filter
     max_datetime_ts: int = None   # filter timewindow has end ts <= filter
     eq_start_date_ts: int = None  # filter min ts is in the same date with that time window start ts
