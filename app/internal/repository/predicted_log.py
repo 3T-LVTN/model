@@ -13,6 +13,8 @@ class PredictedLogFilter(BaseFilterType):
     created_at_lt: int = None
     created_at_gt: int = None
     time_window_id: int = None
+    predict_time_lte: int = None
+    predict_time_gte: int = None
 
 
 class PredictedLogRepo(BaseRepo):
@@ -32,6 +34,11 @@ class PredictedLogRepo(BaseRepo):
         query = db_session.query(PredictedLog)
         query = self.build_query(query, filter).order_by(desc(PredictedLog.created_at))
         return query.first()
+
+    def filter_all(self, db_session: Session, filter: PredictedLogFilter) -> list[PredictedLog]:
+        query = db_session.query(PredictedLog)
+        query = self.build_query(query, filter).order_by(asc(PredictedLog.predict_time), asc(PredictedLog.created_at))
+        return query.all()
 
 
 predicted_log_repo = PredictedLogRepo(PredictedLog)

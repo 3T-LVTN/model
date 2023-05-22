@@ -10,6 +10,7 @@ class LocationDetail(CamelModel):
     temperature: float
     precip: float
 
+
 class LocationDetailGeometry(Geometry):
     location_code: str = None
 
@@ -20,4 +21,4 @@ class LocationDetailData(CamelModel):
 
 
 class GetWeatherDetailResponse(BaseResponse):
-    data: LocationDetailData = Field(default_factory=list)
+    data: LocationDetailData = None

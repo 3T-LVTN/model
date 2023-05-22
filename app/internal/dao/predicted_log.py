@@ -22,6 +22,8 @@ class PredictedLog(BaseModel):
     value = Column(Double)
     model_file_path: str = Column(String(50))
 
+    predict_time = Column(Integer, index=True)
+
     ######## relationship ############
     location: Mapped['Location'] = relationship("Location", foreign_keys=[location_id], viewonly=True)
 

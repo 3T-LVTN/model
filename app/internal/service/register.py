@@ -45,12 +45,15 @@ class Service(IService):
 
     def get_weather_summary(self, ctx: Context, request: GetWeatherSummaryRequest) -> GetWeatherSummaryResponse:
         logger = ctx.extract_logger()
-        weather_summary_dto = asyncio.run(get_weather_summary(ctx, request))
+        weather_summary_dto = asyncio.run(get_weather_summary(ctx, self.models[0],  request))
         logger.info(weather_summary_dto)
         return self.transformer.summary_dto_to_summary_response(weather_summary_dto)
 
     def get_weather_detail(self, ctx: Context, request: GetWeatherDetailRequest) -> GetWeatherDetailResponse:
-        return super().get_weather_detail(ctx, request)
+        logger = ctx.extract_logger()
+        weather_detail_dto = asyncio.run(get_weather_detail(ctx, self.models[0], request))
+        logger.info(weather_detail_dto)
+        return self.transformer.detail_dto_to_detail_response(weather_detail_dto)
 
 
 service = Service()

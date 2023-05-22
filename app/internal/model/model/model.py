@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from datetime import timedelta
+import datetime
 import logging
 from typing import Any
 import pandas as pd
@@ -160,7 +161,6 @@ class Nb2MosquittoModel(Model):
         location = location_repo.get_by_id(db_session, location_id)
         return self.get_predict_with_location_model(location=location, date_time=date_time, db_session=db_session)
 
-
     def get_predict_with_location_model(
             self, location: Location, date_time: int, db_session: Session) -> MosquittoNormalOutput:
         history_predict = predicted_log_repo.first(
@@ -184,10 +184,26 @@ class Nb2MosquittoModel(Model):
             PredictedLog(
                 location_id=location.id,
                 value=count[0],
-                model_file_path=self.file_path
+                model_file_path=self.file_path,
+                predict_time=time_util.to_start_date_timestamp(date_time),
             )
         )
 
         return MosquittoNormalOutput(
             count=count
         )
+
+    def predict_for_time_interval(
+            self, location_id: int, start_time: int, end_time: int, db_session: Session) -> list[float]:
+
+        start_time_dt = time_util.ts_to_datetime(start_time)
+        time_interval = time_util.ts_to_datetime(end_time) - time_util.ts_to_datetime(start_time)
+        res: list[float] = []
+        for i in range(time_interval.days):
+            res.append(
+                self.predict_with_location_id(
+                    location_id=location_id, date_time=time_util.datetime_to_ts(
+                        start_time_dt + datetime.timedelta(days=i)),
+                    db_session=db_session))
+
+        return res

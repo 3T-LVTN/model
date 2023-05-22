@@ -5,8 +5,10 @@ from app.api.request.get_prediction_request import GetPredictionRequest
 from app.api.request.get_weather_detail_request import GetWeatherDetailRequest
 from app.api.response.get_prediction_response import GetPredictionResponse, PredictionData
 from app.api.response.get_summary_response import GetWeatherSummaryResponse, SummaryLocationInfo
+from app.api.response.get_weather_detail_response import GetWeatherDetailResponse, LocationDetail, LocationDetailData, LocationDetailGeometry
 from app.internal.service.dto.prediction_dto import PredictionDTO
 from app.internal.repository.weather_log import weather_log_repo, WeatherLogFilter
+from app.internal.service.dto.weather_detail_dto import WeatherDetailDTO
 from app.internal.service.dto.weather_summary_dto import WeatherSummaryDTO
 from app.internal.util.time_util import time_util
 
@@ -54,3 +56,24 @@ class PredictionTransformer:
             resp.data.append(summary_location_info)
 
         return resp
+
+    def detail_dto_to_detail_response(self, dto: WeatherDetailDTO) -> GetWeatherDetailResponse:
+        data = LocationDetailData()
+        data.location_geometry = LocationDetailGeometry(
+            lat=dto.lat,
+            lng=dto.long,
+            location_code=dto.location_code,
+        )
+        map_date_to_prediction = dto.map_date_to_prediction_value
+        map_date_to_log = dto.map_date_to_weather_log
+        data.location_detail = [
+            LocationDetail(
+                date=date,
+                value=map_date_to_prediction.get(date),
+                temperature=map_date_to_log.get(date).temperature,
+                precip=map_date_to_log.get(date).precipitation,
+            ) for date in map_date_to_prediction.keys()
+        ]
+        return GetWeatherDetailResponse(
+            data=data
+        )
