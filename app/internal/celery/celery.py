@@ -51,6 +51,7 @@ def make_celery():
 
     celery.autodiscover_tasks(['app.internal.celery.tasks.task_crawl_data'])
     celery.autodiscover_tasks(['app.internal.celery.tasks.task_train_model'])
+    celery.autodiscover_tasks(['app.internal.celery.tasks.task_sync_data_from_s3'])
     # For config schedule cronjob
     celery.conf.update(
         beat_schedule={

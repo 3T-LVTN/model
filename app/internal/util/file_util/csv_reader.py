@@ -4,23 +4,26 @@ from typing import Any
 
 from app.internal.model.model.constants import NORMAL_COLUMNS
 
-__USER_FIELD_NAMES: list[str] = []
-__INTERNAL_FIELD_NAMES = NORMAL_COLUMNS
+
+__INTERNAL_FIELD_NAMES = NORMAL_COLUMNS+["value"]
+__USER_FIELD_NAMES: list[str] = []  # TODO: define later
 
 
 class __FieldNameMapper:
     '''
     user field name in csv might be mismatch with internal field name, this class will be file name handler
     for example user will input like str(b'nhi\xe1\xbb\x87t \xc4\x91\xe1\xbb\x99') (nhiệt độ in utf 8 encode),
-    this class will mapped it to temperature in our csv reader
+    this class will map it to temperature in our csv reader
     '''
-    ...
 
     def __init__(self) -> None:
         self.internal_to_user_mapper = {internal: user for internal,
                                         user in zip(__INTERNAL_FIELD_NAMES, __USER_FIELD_NAMES)}
+
         self.user_to_internal_mapper = {user: internal for internal,
-                                        user in zip(__INTERNAL_FIELD_NAMES, __USER_FIELD_NAMES)}
+                                        user in zip(__INTERNAL_FIELD_NAMES, __INTERNAL_FIELD_NAMES)}
+        self.user_to_internal_mapper.update({user: internal for internal,
+                                             user in zip(__INTERNAL_FIELD_NAMES, __USER_FIELD_NAMES)})
 
     def to_user_fields(self, internal_fields: list[str]) -> list[str]:
         return [self.internal_to_user_mapper.get(field) for field in internal_fields]
