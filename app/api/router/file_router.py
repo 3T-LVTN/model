@@ -20,7 +20,7 @@ from app.internal.dao.db import get_db_session
 file_router = CustomAPIRouter()
 
 
-@file_router.post("/upload", response_model=BaseResponse)
+@file_router.post("/upload/", response_model=BaseResponse)
 async def create_upload_file(file: UploadFile = File(...), db_session: Session = Depends(get_db_session)):
     try:
         content = await file.read()
