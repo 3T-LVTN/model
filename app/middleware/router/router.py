@@ -1,5 +1,6 @@
 import datetime
 import json
+import logging
 import time
 from typing import Any, Callable, Union
 from fastapi import APIRouter
@@ -34,6 +35,7 @@ class CustomAPIRoute(APIRoute):
         async def custom_route_handler(request: Request) -> Union[Response, UJSONResponse]:
             resp = None
             e = None
+            logging.info("receive request", request)
             try:
                 resp = await original_route_handler(request)
                 return resp
@@ -42,7 +44,13 @@ class CustomAPIRoute(APIRoute):
                 raise exc
             finally:
                 # end_time = datetime.datetime.strftime(datetime.datetime.now(), DATETIME_FORMAT)
-                req_body = json.loads(await request.body())
+                try:
+                    req_body = await request.body()
+                    req_body = json.loads(req_body)
+                except:
+                    # in some case request body may not be loads
+                    logging.info(req_body)
+                    req_body = None
 
                 if e:
                     err = ApiException(error=e, body=req_body, params=request.query_params)
