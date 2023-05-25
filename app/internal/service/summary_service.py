@@ -5,9 +5,12 @@ import datetime
 import logging
 from typing import Coroutine, Iterable
 import numpy as np
+from sqlalchemy.orm import Session
 
+from app.adapter.visual_crossing_adapter import GetWeatherRequest, visual_crossing_adapter
 from app.api.request.get_summary_request import GetWeatherSummaryRequest
 from app.api.request.get_weather_detail_request import GetWeatherDetailRequest
+from app.common.constant import SUCCESS_STATUS_CODE
 from app.common.context import Context
 from app.common.exception import ThirdServiceException
 from app.api.request.get_summary_request import Location as RequestLocation
@@ -102,35 +105,42 @@ async def get_prediction_for_date(ctx: Context, model: Nb2MosquittoModel, locati
     return prediction.count
 
 
-def get_map_date_to_weather_log(ctx: Context, model: Nb2MosquittoModel, location_id: int, start_time: int,
-                                end_time: int) -> dict[int, WeatherLog]:
+async def get_map_date_to_weather_log(ctx: Context, model: Nb2MosquittoModel, location: Location, list_time: list[int]) -> dict[int, WeatherLog]:
     db_session = ctx.extract_db_session()
+    resp: dict[int, WeatherLog] = {}
+    for time in list_time:
+        query = db_session.query(WeatherLog).where(
+            WeatherLog.location_id == location.id, WeatherLog.date_time == time)
+        weather_log = query.first()
+        if weather_log is None:
+            # if we cannot get this weather log we will try to call to visual crossing to get weather
+            req = GetWeatherRequest(
+                longitude=location.longitude,
+                latitude=location.latitude,
+                start_date_time=time_util.to_start_date_timestamp(time),
+                end_date_time=time_util.to_end_date_timestamp(time),
+            )
+            weather_log_resp = visual_crossing_adapter.get_weather_log(req)
+            if weather_log_resp.code != SUCCESS_STATUS_CODE:
+                raise ThirdServiceException()
+            data = weather_log_resp.data[0]
+            # save it without time window id, will have celery job to update it later
+            weather_log = WeatherLog(**data.dict(), location_id=location.id)
+            weather_log_repo.save(db_session, weather_log)
+        resp.update({time: weather_log})
+    return resp
 
-    weather_logs = weather_log_repo.filter_all(db_session=db_session, filter=WeatherLogFilter(
-        time_gte=start_time,
-        time_lte=end_time,
-    ))
-    logging.info(len(weather_logs))
-    weather_logs.sort(key=lambda x: x.date_time)
-    start_time_dt = time_util.ts_to_datetime(start_time)
-    time_interval = time_util.ts_to_datetime(end_time) - start_time_dt
-    logging.info(time_interval.days)
-    return {
-        time_util.datetime_to_ts(start_time_dt+datetime.timedelta(i)): weather_logs[i] for i in range(time_interval.days)
-    }
 
-
-def get_map_date_to_prediction(
-        ctx: Context, model: Nb2MosquittoModel, location_id: int, start_time: int, end_time: int) -> dict[
+async def get_map_date_to_prediction(
+        ctx: Context, model: Nb2MosquittoModel, location_id: int, list_time: list[int]) -> dict[
         int, float]:
+    resp: dict[int, float] = {}
     db_session = ctx.extract_db_session()
-    start_time_dt = time_util.ts_to_datetime(start_time)
-    time_interval = time_util.ts_to_datetime(end_time) - start_time_dt
-    predictions = model.predict_for_time_interval(
-        location_id=location_id, start_time=start_time, end_time=end_time, db_session=db_session)
-    return {
-        time_util.datetime_to_ts(start_time_dt+datetime.timedelta(i)): predictions[i] for i in range(time_interval.days)
-    }
+    for time in list_time:
+        prediction = model.predict_with_location_id(
+            location_id=location_id, date_time=time, db_session=db_session)
+        resp.update({time: prediction.count})
+    return resp
 
 
 async def get_weather_detail(ctx: Context, model: Nb2MosquittoModel,
@@ -140,11 +150,13 @@ async def get_weather_detail(ctx: Context, model: Nb2MosquittoModel,
 
     internal_location, third_party_location = _find_location_by_long_lat(
         ctx, RequestLocation(lat=request.lat, long=request.lng))
-
-    map_date_to_prediction = get_map_date_to_prediction(
-        ctx, model, location_id=internal_location.id, start_time=request.start_time, end_time=request.end_time)
-    map_date_to_weather_log = get_map_date_to_weather_log(
-        ctx, model, location_id=internal_location.id, start_time=request.start_time, end_time=request.end_time)
+    start_time_dt = time_util.ts_to_datetime(request.start_time)
+    time_interval = time_util.ts_to_datetime(request.end_time) - start_time_dt
+    list_time = [time_util.datetime_to_ts(start_time_dt+datetime.timedelta(i)) for i in range(time_interval.days)]
+    map_date_to_prediction = await get_map_date_to_prediction(
+        ctx, model, location_id=internal_location.id, list_time=list_time)
+    map_date_to_weather_log = await get_map_date_to_weather_log(
+        ctx, model, location=internal_location, list_time=list_time)
 
     return WeatherDetailDTO(
         lat=request.lat,
