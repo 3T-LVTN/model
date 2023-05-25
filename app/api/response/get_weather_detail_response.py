@@ -16,7 +16,7 @@ class LocationDetailGeometry(Geometry):
 
 
 class LocationDetailData(CamelModel):
-    location_geometry: LocationDetailGeometry
+    location_geometry: LocationDetailGeometry = None
     location_detail: list[LocationDetail] = Field(default_factory=list)
 
 
