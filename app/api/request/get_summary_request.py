@@ -3,8 +3,8 @@ from pydantic import Field
 
 
 class Location(CamelModel):
-    lat: float
-    lng: float
+    lat: float = None
+    lng: float = None
     location_code: str = None
 
 

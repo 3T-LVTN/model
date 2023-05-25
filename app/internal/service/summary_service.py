@@ -68,17 +68,15 @@ async def get_weather_log_with_location_ids(ctx: Context, location_ids: Iterable
 async def get_weather_summary(ctx: Context, model: Nb2MosquittoModel, request: GetWeatherSummaryRequest) -> WeatherSummaryDTO:
     db_session = ctx.extract_db_session()
 
-    map_location_id_to_prediction: dict[int, float] = {}
     map_location_id_to_third_party: dict[int, ThirdPartyLocation] = {}
-    map_location_id_to_weather_log: dict[int, WeatherLog] = {}
     map_location_id_to_location: dict[int, Location] = {}
 
     third_party_locations = third_party_location_repo.filter_all(db_session, ThirdPartyLocationFilter(
         location_codes=[location.location_code for location in request.locations]
     ))
-
+    location_codes = [location.location_code for location in third_party_locations]
     for location in request.locations:
-        if location.location_code not in third_party_locations:
+        if location.location_code not in location_codes:
             internal_location, third_party_location = _find_location_by_long_lat(ctx, location)
             map_location_id_to_third_party.update({internal_location.id: third_party_location})
             map_location_id_to_location.update({internal_location.id: internal_location})
@@ -122,7 +120,7 @@ async def get_map_date_to_prediction(ctx: Context, model: Nb2MosquittoModel, loc
     start_time_dt = time_util.ts_to_datetime(start_time)
     time_interval = time_util.ts_to_datetime(end_time) - start_time_dt
     predictions = model.predict_for_time_interval(
-        location=location_id, start_time=start_time, end_time=end_time, db_session=db_session)
+        location_id=location_id, start_time=start_time, end_time=end_time, db_session=db_session)
     return {
         time_util.datetime_to_ts(start_time_dt+datetime.timedelta(i)): predictions[i] for i in range(time_interval.days)
     }
@@ -133,14 +131,15 @@ async def get_weather_detail(ctx: Context, model: Nb2MosquittoModel,
     logger = ctx.extract_logger()
     db_session = ctx.extract_db_session()
 
-    internal_location, third_party_location = _find_location_by_long_lat(ctx, RequestLocation(**request.dict()))
+    internal_location, third_party_location = _find_location_by_long_lat(
+        ctx, RequestLocation(lat=request.lat, long=request.lng))
 
     map_date_to_weather_log = await get_map_date_to_weather_log(ctx, model, location_id=internal_location.id, start_time=request.start_time, end_time=request.end_time)
     map_date_to_prediction = await get_map_date_to_prediction(ctx, model, location_id=internal_location.id, start_time=request.start_time, end_time=request.end_time)
     return WeatherDetailDTO(
-        lat=  request.lat,
-        long= request.lng,
-        location_code= third_party_location.location_code,
-        map_date_to_prediction_value= map_date_to_prediction,
-        map_date_to_weather_log= map_date_to_weather_log,
+        lat=request.lat,
+        long=request.lng,
+        location_code=third_party_location.location_code,
+        map_date_to_prediction_value=map_date_to_prediction,
+        map_date_to_weather_log=map_date_to_weather_log,
     )

@@ -67,7 +67,7 @@ class CustomLoggerAdapter(logging.LoggerAdapter):
 
     def process(self, msg, kwargs):
         tag_str = ''
-        for tag in self.extra['tags']:
+        for tag in self.extra.get('tags',[]):
             tag_str += f'[{tag}]'
         if kwargs.get("extra") is None:
             kwargs["extra"] = {}

@@ -1,3 +1,4 @@
+from typing import Iterable
 from app.internal.dao.base import Page
 from app.internal.dao.time_window import TimeWindow
 from app.internal.dao.weather_log import WeatherLog
@@ -17,7 +18,7 @@ class WeatherLogFilter(BaseFilterType):
     time_lte: int = None
     # relationship
     time_window_sliding_size: int = None
-    location_ids: list[int] = None
+    location_ids: Iterable[int] = None
 
 
 class WeatherLogRepo(BaseRepo[WeatherLog]):
@@ -42,11 +43,11 @@ class WeatherLogRepo(BaseRepo[WeatherLog]):
         return query
 
     def filter(self, db_session: Session, filter: WeatherLogFilter, page=None, page_size=None) -> Page[WeatherLog]:
-        query = db_session.query()
+        query = db_session.query(WeatherLog)
         return self.paginate(self._build_filter_query(query, filter), page=page, page_size=page_size)
 
     def filter_all(self, db_session: Session, filter: WeatherLogFilter) -> list[WeatherLog]:
-        query = db_session.query()
+        query = db_session.query(WeatherLog)
         return self._build_filter_query(query, filter).all()
 
 
