@@ -1,6 +1,7 @@
 from pydantic import BaseModel
-from sqlalchemy.orm import Session, Query
+from sqlalchemy.orm import Session, Query, joinedload
 from sqlalchemy import func
+from app.internal.dao.location import Location
 
 from app.internal.repository.constants import FLOATING_POINT_THRESHOLD
 from app.internal.dao.third_party_location import ThirdPartyLocation
@@ -15,6 +16,7 @@ class ThirdPartyLocationRepo(BaseRepo[ThirdPartyLocation]):
     def _build_filter_query(self, query: Query, filter: ThirdPartyLocationFilter) -> Query:
         if filter.location_codes is not None:
             query = query.where(ThirdPartyLocation.location_code.in_(filter.location_codes))
+        query = query.options(joinedload(ThirdPartyLocation.location))
         return query
 
     def filter(self, db_session: Session, filter: ThirdPartyLocationFilter, page=None, page_size=None) -> Page[
