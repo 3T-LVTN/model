@@ -25,7 +25,7 @@ def get_prediction(
     return service.get_prediction(ctx, request)
 
 
-@prediction_router.post("/weather_log/summary", response_model=GetWeatherSummaryResponse)
+@prediction_router.post("/prediction/summary", response_model=GetWeatherSummaryResponse)
 def get_weather_summary(
         request: GetWeatherDetailRequest, db_session: Session = Depends(db.get_db_session),
         ctx: Context = Depends(get_context)):
@@ -34,9 +34,9 @@ def get_weather_summary(
     return service.get_weather_summary(ctx, request)
 
 
-@prediction_router.post("/weather_log/detail", response_model=GetWeatherDetailResponse)
+@prediction_router.post("/prediction/detail", response_model=GetWeatherDetailResponse)
 def get_weather_detail(request: GetWeatherDetailRequest, db_session: Session = Depends(
-    db.get_db_session), ctx: Context = Depends(get_context)):
+        db.get_db_session), ctx: Context = Depends(get_context)):
     ctx.extract_logger("API", "weather_log detail")
     ctx.attach_db_session(db_session)
     return service.get_weather_detail(ctx, request)
