@@ -204,6 +204,6 @@ class Nb2MosquittoModel(Model):
                 self.predict_with_location_id(
                     location_id=location_id, date_time=time_util.datetime_to_ts(
                         start_time_dt + datetime.timedelta(days=i)),
-                    db_session=db_session))
+                    db_session=db_session).count)
 
         return res

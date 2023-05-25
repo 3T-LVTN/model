@@ -110,9 +110,11 @@ def get_map_date_to_weather_log(ctx: Context, model: Nb2MosquittoModel, location
         time_gte=start_time,
         time_lte=end_time,
     ))
+    logging.info(len(weather_logs))
     weather_logs.sort(key=lambda x: x.date_time)
     start_time_dt = time_util.ts_to_datetime(start_time)
     time_interval = time_util.ts_to_datetime(end_time) - start_time_dt
+    logging.info(time_interval.days)
     return {
         time_util.datetime_to_ts(start_time_dt+datetime.timedelta(i)): weather_logs[i] for i in range(time_interval.days)
     }
