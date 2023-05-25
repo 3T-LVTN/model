@@ -1,8 +1,17 @@
+import logging
+import uuid
 from sqlalchemy.orm import Session
-from fastapi import APIRouter, Depends
-from app.internal.dao import db
+from fastapi import APIRouter, Depends, File, UploadFile
+from botocore.exceptions import ClientError
 
+from app.adapter.file_service import file_service_adapter
+from app.api.response.base import BaseResponse
+from app.common.exception import ThirdServiceException
+from app.internal.dao import db
+from app.internal.dao.synced_file import SyncedFile
+from app.internal.repository.synced_file import synced_file_repo
 from app.internal.service.register import service
+from app.internal.util.time_util import time_util
 from app.middleware.router.router import CustomAPIRouter
 from app.api.response.get_prediction_response import GetPredictionResponse
 from app.api.request.get_prediction_request import GetPredictionRequest
@@ -27,7 +36,7 @@ def get_prediction(
 
 @prediction_router.post("/prediction/summary", response_model=GetWeatherSummaryResponse)
 def get_weather_summary(
-        request: GetWeatherDetailRequest, db_session: Session = Depends(db.get_db_session),
+        request: GetWeatherSummaryRequest, db_session: Session = Depends(db.get_db_session),
         ctx: Context = Depends(get_context)):
     ctx.extract_logger("API", "weather_log summary")
     ctx.attach_db_session(db_session)
@@ -40,3 +49,18 @@ def get_weather_detail(request: GetWeatherDetailRequest, db_session: Session = D
     ctx.extract_logger("API", "weather_log detail")
     ctx.attach_db_session(db_session)
     return service.get_weather_detail(ctx, request)
+
+
+@prediction_router.post("/prediction/upload/", response_model=BaseResponse)
+async def create_upload_file(file: UploadFile = File(...), db_session: Session = Depends(db.get_db_session)):
+    try:
+        content = await file.read()
+
+        file_service_file_name = f"{file.filename}_{time_util.datetime_to_file_name_str(time_util.now())}_{str(uuid.uuid4())}"
+        synced_file_repo.save(db_session, SyncedFile(file_name=file_service_file_name))
+        content = bytes(content, encoding='utf-8') if isinstance(content, str) else content
+        file_service_adapter.file_service.upload_file(content=content, file_name=file_service_file_name)
+    except ClientError as e:
+        logging.info(f"file service error: {e}")
+        raise ThirdServiceException()
+    return BaseResponse()

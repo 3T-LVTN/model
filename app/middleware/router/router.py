@@ -44,10 +44,12 @@ class CustomAPIRoute(APIRoute):
                 raise exc
             finally:
                 # end_time = datetime.datetime.strftime(datetime.datetime.now(), DATETIME_FORMAT)
+                req_body = None
                 try:
                     req_body = await request.body()
                     req_body = json.loads(req_body)
-                except:
+                except Exception as exc:
+                    logging.info(exc)
                     # in some case request body may not be loads
                     logging.info(req_body)
                     req_body = None

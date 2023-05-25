@@ -9,4 +9,4 @@ class GetWeatherDetailRequest(CamelModel):
     lat: float = None
     lng: float = None
     # time_interval: int = Field(default=1, description="number of day we between 2 response record") # TODO: support later
-    location_code: str = Field(description="currently is ward code")
+    location_code: str = Field(None, description="currently is ward code")

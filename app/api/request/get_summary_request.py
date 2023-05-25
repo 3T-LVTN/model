@@ -5,7 +5,7 @@ from pydantic import Field
 class Location(CamelModel):
     lat: float
     lng: float
-    location_code: str
+    location_code: str = None
 
 
 class GetWeatherSummaryRequest(CamelModel):
