@@ -6,9 +6,11 @@ from typing import Dict, Any
 HOST = "0.0.0.0"
 APP_PORT = 8000
 
+ENV = os.getenv("ENV", default="dev")
 # DB
-DB_HOST: str = os.getenv("DB_HOST", default="172.17.0.1")
-DB_PORT: str = os.getenv("DB_PORT", default="5005")
+DB_HOST: str = os.getenv("DB_HOST", default="sql-vove")
+# NOTE: hardcode as we use port on container not port on localhost  # os.getenv("DB_PORT", default="5432")
+DB_PORT: str = "5432"
 DB_NAME: str = os.getenv("DB_NAME", default="vove")
 DB_USERNAME: str = os.getenv("POSTGRES_USER", default="postgres")
 DB_PASSWORD: str = os.getenv("POSTGRES_PASSWORD", default="thinh3112001")
@@ -17,8 +19,9 @@ DB_URI: str = f'postgresql://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}:' \
 
 
 # REDIS
-REDIS_HOST: str = os.getenv("REDIS_HOST", default="172.17.0.1")
-REDIS_PORT: str = os.getenv("REDIS_PORT", default="6379")
+REDIS_HOST: str = os.getenv("REDIS_HOST", default="vove_redis_")+ENV
+# NOTE: hardcode as we use port on container not port on localhost  # os.getenv("REDIS_PORT", default="6379")
+REDIS_PORT: str = "6379"
 REDIS_URL: str = f"redis://{REDIS_HOST}:{REDIS_PORT}"
 CACHE_OUTDATED_TIME: int = int(os.getenv('CALCULATION_CONFIG_CACHE_OUTDATED_TIME', default=600))
 # CELERY
