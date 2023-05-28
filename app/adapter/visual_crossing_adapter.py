@@ -105,7 +105,7 @@ class VisualCrossingAdapter(BaseAdapter):
     def _format_resp_data(self, data: Any) -> GetWeatherLogResponseData:
         try:
             content = codecs.decode(data, 'utf-8')
-            logging.info("visual reponse content: ", content)
+            logging.info(f"visual reponse content:{content}")
             content = content.split("\n")
             # TODO: improve performance by run in parralel below
             resp_header = self._clean_header(content[0])

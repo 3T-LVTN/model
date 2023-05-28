@@ -13,11 +13,14 @@ from app.internal.service.dto.prediction_dto import PredictionDTO
 
 def get_prediction(ctx: Context, model: Nb2MosquittoModel, request: GetPredictionRequest) -> dict[int, PredictionDTO]:
     db_session = ctx.extract_db_session()
+
     result: list[PredictionDTO] = []
     for location in request.locations:
         try:
+            logging.info(f"predict for location idx: {location.idx}")
             prediction = model.predict(longitude=location.long, latitude=location.lat,
                                        date_time=request.predict_date, db_session=db_session)
+            logging.info(f"prediction: {prediction.count}")
         except ThirdServiceException:
             logging.info("third party has no data for this locations")
             continue

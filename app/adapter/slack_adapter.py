@@ -6,7 +6,7 @@ from app.config import env_var
 
 
 class SlackMessageAdapter(BaseAdapter):
-    mention_users = ["cloudythy"]
+    mention_users = env_var.SLACK_MENTION_USERS
 
     def __init__(self, cfg: WebhookConfig) -> None:
         super().__init__(url=cfg.url, name="SLACK")

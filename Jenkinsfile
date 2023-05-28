@@ -54,6 +54,7 @@ pipeline {
                         def container_prefix = env.CONTAINER_PREFIX
                         def container_name = container_prefix.length() == 0 ? 'model' : container_prefix + "_model"
                         sh "cp $ENV $WORKSPACE/${directoryName}/.env"
+                        sh "cp $ALEMBIC $WORKSPACE/${directoryName}/alembic.ini"
                         sh "cd ${directoryName}; chmod +x ./build.sh; ./build.sh --env $container_prefix --env-file .env"
                     }
                 }

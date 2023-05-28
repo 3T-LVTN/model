@@ -27,5 +27,6 @@ while true; do
 done
 echo $ENV
 echo $ENV_FILE
-DOCKER_BUILD_KIT=1 docker build -t model_$ENV .
+DOCKER_BUILD_KIT=1 docker build -t vove_model_$ENV --file ./docker/app/Dockerfile .
+DOCKER_BUILD_KIT=1 docker build -t vove_celery_$ENV --file ./docker/celery/Dockerfile .
 docker-compose up -d

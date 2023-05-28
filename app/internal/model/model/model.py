@@ -130,19 +130,23 @@ class Nb2MosquittoModel(Model):
         return result
 
     def _get_nearest_location(self, db_session: Session, longitude: float, latitude: float) -> Location:
+        logging.info("start getting nearest location base on long lat")
         location = db_session.query(Location).where(
             Location.longitude < longitude+LOCATION_DISTANCE_THRESHOLD,
             Location.longitude > longitude-LOCATION_DISTANCE_THRESHOLD,
             Location.latitude < latitude+LOCATION_DISTANCE_THRESHOLD,
             Location.latitude > latitude-LOCATION_DISTANCE_THRESHOLD,
         ).all()
+        logging.info("get location done")
         if len(location) == 0:
             return None
 
-        location.sort(key=lambda x: (x.longitude-longitude) + (x.latitude-latitude))
+        location.sort(key=lambda x: abs(x.longitude-longitude) + abs(x.latitude-latitude))
+        logging.info(location[0].id)
         return location[0]
 
     def get_input_location(self, db_session: Session, longitude: float, latitude: float) -> Location:
+        logging.info("start getting input location")
         location = self._get_nearest_location(db_session, longitude, latitude)
         if location is None:
             # if there is no location is valid
@@ -154,6 +158,7 @@ class Nb2MosquittoModel(Model):
             self, longitude: float, latitude: float, date_time: int, db_session: Session = None,
             *args, **kwargs) -> MosquittoNormalOutput:
         location = self.get_input_location(db_session, longitude, latitude)
+        logging.info(f"location id base on long {longitude} lat {latitude} is: {location.id}")
         return self.get_predict_with_location_model(location=location, date_time=date_time, db_session=db_session)
 
     def predict_with_location_id(
@@ -171,6 +176,8 @@ class Nb2MosquittoModel(Model):
                 created_at_gt=time_util.to_start_date(time_util.now()).timestamp(),
             )
         )
+        logging.info(
+            f"history prediction for location id {location.id} at {date_time} is {history_predict.value if history_predict is not None else 'None'}")
         if history_predict is not None:
             return MosquittoNormalOutput(
                 count=history_predict.value
@@ -188,7 +195,8 @@ class Nb2MosquittoModel(Model):
                 predict_time=time_util.to_start_date_timestamp(date_time),
             )
         )
-
+        logging.info(
+            f"new prediction for location id {location.id} at {date_time} is {count}")
         return MosquittoNormalOutput(
             count=count
         )

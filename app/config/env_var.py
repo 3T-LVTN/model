@@ -1,3 +1,4 @@
+import json
 import os
 from typing import Dict, Any
 
@@ -6,7 +7,7 @@ HOST = "0.0.0.0"
 APP_PORT = 8000
 
 # DB
-DB_HOST: str = os.getenv("DB_HOST", default="host.docker.internal")
+DB_HOST: str = os.getenv("DB_HOST", default="172.17.0.1")
 DB_PORT: str = os.getenv("DB_PORT", default="5005")
 DB_NAME: str = os.getenv("DB_NAME", default="vove")
 DB_USERNAME: str = os.getenv("POSTGRES_USER", default="postgres")
@@ -16,7 +17,7 @@ DB_URI: str = f'postgresql://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}:' \
 
 
 # REDIS
-REDIS_HOST: str = os.getenv("REDIS_HOST", default="localhost")
+REDIS_HOST: str = os.getenv("REDIS_HOST", default="172.17.0.1")
 REDIS_PORT: str = os.getenv("REDIS_PORT", default="6379")
 REDIS_URL: str = f"redis://{REDIS_HOST}:{REDIS_PORT}"
 CACHE_OUTDATED_TIME: int = int(os.getenv('CALCULATION_CONFIG_CACHE_OUTDATED_TIME', default=600))
@@ -74,7 +75,11 @@ LOGGING_CONFIG: Dict[str, Any] = {
 SLACK_WEBHOOK_URL = os.getenv("SLACK_WEBHOOK_URL", default="")
 ENVIRONMENT = os.getenv("ENVIRONMENT", default="DEVELOP")
 SLACK_ALERT_CHANNEL_NAME = os.getenv("SLACK_ALERT_CHANNEL", default="hoethy")
-
+SLACK_DEFAULT_MENTION_USERS = ["cloudythy"]
+try:
+    SLACK_MENTION_USERS: list[str] = json.loads(os.getenv("SLACK_MENTION_USERS"))
+except Exception:
+    SLACK_MENTION_USERS = SLACK_DEFAULT_MENTION_USERS
 
 # EXPERIMENT
 IS_EXPERIMENT: bool = True if os.getenv("IS_EXPERIMENT") else False

@@ -1,8 +1,11 @@
 version: '3.8'
 services:
   app:
-    image: model_${ENV}
-    container_name: model_${ENV}
+    build:
+      context: .
+      dockerfile: docker/app/Dockerfile
+    image: vove_model_${ENV}
+    container_name: vove_model_${ENV}
     environment:
       - ENV=${ENV}
     env_file:
@@ -17,7 +20,33 @@ services:
         awslogs-region: ap-southeast-1
         awslogs-group: vove-model-${ENV}
         tag: '{{ with split .ImageName ":" }}{{join . "_"}}{{end}}-{{.ID}}'
-
+  celery:
+    build:
+      context: .
+      dockerfile: docker/celery/Dockerfile
+    image: vove_celery_${ENV}
+    container_name: vove_celery_${ENV}
+    environment:
+      - ENV=${ENV}
+    env_file:
+      - ${ENV_FILE}
+    networks:
+      - vove
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: ap-southeast-1
+        awslogs-group: vove-model-${ENV}
+        tag: '{{ with split .ImageName ":" }}{{join . "_"}}{{end}}-{{.ID}}'
+  redis:
+    image: redis:latest
+    container_name: vove_redis_${ENV}
+    ports:
+      - '${REDIS_PORT}:6379'
+    networks:
+      - vove
+    expose:
+      - '6379/tcp'
 networks:
   vove:
     name: vove

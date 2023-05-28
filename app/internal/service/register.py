@@ -1,5 +1,6 @@
 from abc import abstractmethod
 import asyncio
+import logging
 from typing import Protocol
 from sqlalchemy.orm import Session
 
@@ -16,6 +17,8 @@ from app.internal.service.prediction_service import get_prediction
 from app.internal.service.summary_service import get_weather_summary,  get_weather_detail
 from app.internal.service.transformer.prediction_transformer import PredictionTransformer
 from app.internal.repository.weather_log import weather_log_repo
+
+__logger = logging.getLogger(__file__)
 
 
 class IService(Protocol):
@@ -44,15 +47,13 @@ class Service(IService):
         return self.transformer.prediction_dto_to_response(request, data)
 
     def get_weather_summary(self, ctx: Context, request: GetWeatherSummaryRequest) -> GetWeatherSummaryResponse:
-        logger = ctx.extract_logger()
         weather_summary_dto = asyncio.run(get_weather_summary(ctx, self.models[0],  request))
-        logger.info(weather_summary_dto)
+        __logger.info(weather_summary_dto)
         return self.transformer.summary_dto_to_summary_response(weather_summary_dto)
 
     def get_weather_detail(self, ctx: Context, request: GetWeatherDetailRequest) -> GetWeatherDetailResponse:
-        logger = ctx.extract_logger()
         weather_detail_dto = asyncio.run(get_weather_detail(ctx, self.models[0], request))
-        logger.info(weather_detail_dto)
+        __logger.info(weather_detail_dto)
         return self.transformer.detail_dto_to_detail_response(weather_detail_dto)
 
 

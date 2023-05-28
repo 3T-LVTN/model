@@ -145,8 +145,6 @@ async def get_map_date_to_prediction(
 
 async def get_weather_detail(ctx: Context, model: Nb2MosquittoModel,
                              request: GetWeatherDetailRequest) -> WeatherDetailDTO:
-    logger = ctx.extract_logger()
-    db_session = ctx.extract_db_session()
 
     internal_location, third_party_location = _find_location_by_long_lat(
         ctx, RequestLocation(lat=request.lat, long=request.lng))

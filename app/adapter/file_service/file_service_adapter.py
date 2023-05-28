@@ -41,9 +41,14 @@ class FileService(IFileService):
         self.get_connection()
         return self.client.get_file_content(file_name).decode()
 
-    def get_list_file(self, prefix: str = None) -> list[str]:
+    def get_list_file(self, prefix: str = None, postfixes: list[str] = None) -> list[str]:
+        '''
+        post fix is our implementation to filter extension by file
+        because s3 do not support filter by postfix
+        our more general ways to implement this is allow passing regexp but no one want to read regexp :(
+        '''
         self.get_connection()
-        return self.client.get_list_file(prefix)
+        return [file for file in self.client.get_list_file(prefix) if any([file.endswith(postfix) for postfix in postfixes])]
 
 
 file_service = FileService()

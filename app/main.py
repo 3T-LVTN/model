@@ -41,7 +41,10 @@ def get_application() -> FastAPI:
         status_code=500,
         content=BaseResponse(code=e.code, message="another third party service, retry later or choose another location"))
     )
-
+    paths = app.openapi().get("paths")
+    for path, operations in paths.items():
+        for method, metadata in operations.items():
+            metadata["responses"].pop("422", None)
     # add request validation error in future
     # application.add_exception_handler(
     #     RequestValidationError, validation_exception_handler
