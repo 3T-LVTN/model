@@ -5,7 +5,6 @@ from app.api.response.base import BaseResponse
 
 
 class PredictionData(CamelModel):
-    idx: int = None
     long: float = None
     lat: float = None
     weight: float = None  # None mean no prediction for this one
