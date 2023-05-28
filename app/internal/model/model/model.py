@@ -131,19 +131,19 @@ class Nb2MosquittoModel(Model):
 
     def _get_nearest_location(self, db_session: Session, longitude: float, latitude: float) -> Location:
         logging.info("start getting nearest location base on long lat")
+        max_lng = longitude+LOCATION_DISTANCE_THRESHOLD
+        min_lng = longitude-LOCATION_DISTANCE_THRESHOLD
+        max_lat = latitude + LOCATION_DISTANCE_THRESHOLD
+        min_lat = latitude-LOCATION_DISTANCE_THRESHOLD
+        distances = func.abs(Location.longitude - longitude) + func.abs(Location.latitude - latitude)
         location = db_session.query(Location).where(
-            Location.longitude < longitude+LOCATION_DISTANCE_THRESHOLD,
-            Location.longitude > longitude-LOCATION_DISTANCE_THRESHOLD,
-            Location.latitude < latitude+LOCATION_DISTANCE_THRESHOLD,
-            Location.latitude > latitude-LOCATION_DISTANCE_THRESHOLD,
-        ).all()
-        logging.info("get location done")
-        if len(location) == 0:
-            return None
+            Location.longitude < max_lng,
+            Location.longitude > min_lng,
+            Location.latitude < max_lat,
+            Location.latitude > min_lat,
+        ).order_by(asc(distances)).first()
 
-        location.sort(key=lambda x: abs(x.longitude-longitude) + abs(x.latitude-latitude))
-        logging.info(location[0].id)
-        return location[0]
+        return location
 
     def get_input_location(self, db_session: Session, longitude: float, latitude: float) -> Location:
         logging.info("start getting input location")
