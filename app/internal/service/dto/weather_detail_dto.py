@@ -10,3 +10,4 @@ class WeatherDetailDTO:
     location_code: str
     map_date_to_prediction_value: dict[int, float] = None
     map_date_to_weather_log: dict[int, WeatherLog] = None
+    map_date_to_quartile: dict[int, int] = None

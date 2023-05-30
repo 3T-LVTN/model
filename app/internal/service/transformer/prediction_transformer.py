@@ -11,6 +11,7 @@ from app.internal.repository.weather_log import weather_log_repo, WeatherLogFilt
 from app.internal.service.dto.weather_detail_dto import WeatherDetailDTO
 from app.internal.service.dto.weather_summary_dto import WeatherSummaryDTO
 from app.internal.util.time_util import time_util
+from app.api.response.common import MAP_IDX_TO_RATE
 
 
 class PredictionTransformer:
@@ -46,13 +47,15 @@ class PredictionTransformer:
             location_info = dto.map_location_id_to_location.get(id)
             weather_info = dto.map_location_id_to_weather_log.get(id)
             predict = dto.map_location_id_to_prediction.get(id)
+            rate = dto.map_location_id_to_quartile.get(id)
             summary_location_info = SummaryLocationInfo(
                 location_code=third_party_location.location_code,
                 lat=location_info.latitude,
                 lng=location_info.longitude,
                 value=predict,
                 precip=weather_info.precipitation,
-                temperature=weather_info.temperature
+                temperature=weather_info.temperature,
+                rate=MAP_IDX_TO_RATE.get(rate),
             )
             resp.data.append(summary_location_info)
 
@@ -68,12 +71,14 @@ class PredictionTransformer:
         )
         map_date_to_prediction = dto.map_date_to_prediction_value
         map_date_to_log = dto.map_date_to_weather_log
+        map_date_to_rate = dto.map_date_to_quartile
         data.location_detail = [
             LocationDetail(
                 date=date,
                 value=map_date_to_prediction.get(date),
                 temperature=map_date_to_log.get(date).temperature,
                 precip=map_date_to_log.get(date).precipitation,
+                rate=MAP_IDX_TO_RATE.get(map_date_to_rate.get(date)),
             ) for date in map_date_to_prediction.keys()
         ]
         return GetWeatherDetailResponse(

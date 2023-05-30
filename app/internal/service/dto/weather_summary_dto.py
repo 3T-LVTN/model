@@ -12,3 +12,4 @@ class WeatherSummaryDTO:
     map_location_id_to_prediction: dict[int, float]
     map_location_id_to_third_party: dict[int, ThirdPartyLocation]
     map_location_id_to_location: dict[int, Location]
+    map_location_id_to_quartile: dict[int, int]

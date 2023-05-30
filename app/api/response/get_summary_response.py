@@ -2,6 +2,7 @@ from fastapi_camelcase import CamelModel
 from pydantic import Field
 
 from app.api.response.base import BaseResponse
+from app.api.response.common import Rate
 
 
 class SummaryLocationInfo(CamelModel):
@@ -11,6 +12,7 @@ class SummaryLocationInfo(CamelModel):
     value: float
     precip: float
     temperature: float
+    rate: Rate
 
 
 class GetWeatherSummaryResponse(BaseResponse):
