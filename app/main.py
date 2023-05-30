@@ -22,7 +22,8 @@ logging.config.dictConfig(env_var.LOGGING_CONFIG)
 
 
 def get_application() -> FastAPI:
-    app = FastAPI(docs_url="/docs", redoc_url="/redoc", openapi_url="/openapi.json")
+    app = FastAPI(docs_url="/api/prediction/docs", redoc_url="/api/prediction/redoc",
+                  openapi_url="/api/prediction/openapi.json")
 
     app.add_middleware(
         CORSMiddleware,
