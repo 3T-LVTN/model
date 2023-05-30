@@ -30,7 +30,7 @@ from app.internal.util.time_util import time_util
 
 async def get_weather_summary(ctx: Context, model: Nb2MosquittoModel, request: GetWeatherSummaryRequest) -> WeatherSummaryDTO:
 
-    map_location_id_to_location, map_location_id_to_third_party = get_map_location_by_location_support_filter(
+    map_location_id_to_location, map_location_id_to_third_party = await get_map_location_by_location_support_filter(
         ctx, request.locations)
 
     map_location_id_to_prediction = await predict_with_location_ids(
@@ -93,7 +93,7 @@ async def get_map_date_to_prediction(
 async def get_weather_detail(ctx: Context, model: Nb2MosquittoModel,
                              request: GetWeatherDetailRequest) -> WeatherDetailDTO:
 
-    internal_location, third_party_location = _find_location_by_long_lat(
+    internal_location, third_party_location = await _find_location_by_long_lat(
         ctx, RequestLocation(lat=request.lat, long=request.lng))
     start_time_dt = time_util.ts_to_datetime(request.start_time)
     time_interval = time_util.ts_to_datetime(request.end_time) - start_time_dt
