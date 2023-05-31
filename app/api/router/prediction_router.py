@@ -1,3 +1,4 @@
+import asyncio
 from http import HTTPStatus
 import logging
 import uuid
@@ -27,29 +28,29 @@ prediction_router = CustomAPIRouter()
 
 
 @prediction_router.post("/prediction", response_model=GetPredictionResponse)
-def get_prediction(
+async def get_prediction(
         request: GetPredictionRequest, db_session: Session = Depends(db.get_db_session),
         ctx: Context = Depends(get_context)):
     logging.info("api prediction")
     ctx.attach_db_session(db_session)
-    return service.get_prediction(ctx, request)
+    return await service.get_prediction(ctx, request)
 
 
 @prediction_router.post("/prediction/summary", response_model=GetWeatherSummaryResponse)
-def get_weather_summary(
+async def get_weather_summary(
         request: GetWeatherSummaryRequest, db_session: Session = Depends(db.get_db_session),
         ctx: Context = Depends(get_context)):
     logging.info("api prediction summary")
     ctx.attach_db_session(db_session)
-    return service.get_weather_summary(ctx, request)
+    return await service.get_weather_summary(ctx, request)
 
 
 @prediction_router.post("/prediction/detail", response_model=GetWeatherDetailResponse)
-def get_weather_detail(request: GetWeatherDetailRequest, db_session: Session = Depends(
+async def get_weather_detail(request: GetWeatherDetailRequest, db_session: Session = Depends(
         db.get_db_session), ctx: Context = Depends(get_context)):
     logging.info("api prediction detail")
     ctx.attach_db_session(db_session)
-    return service.get_weather_detail(ctx, request)
+    return await service.get_weather_detail(ctx, request)
 
 
 @prediction_router.post("/prediction/upload/", response_model=BaseResponse)

@@ -23,13 +23,14 @@ __logger = logging.getLogger(__file__)
 
 class IService(Protocol):
     @abstractmethod
-    def get_prediction(self, ctx: Context,  request: GetPredictionRequest) -> GetPredictionResponse: ...
+    async def get_prediction(self, ctx: Context,  request: GetPredictionRequest) -> GetPredictionResponse: ...
 
     @abstractmethod
-    def get_weather_summary(self, ctx: Context, request: GetWeatherSummaryRequest) -> GetWeatherSummaryResponse: ...
+    async def get_weather_summary(
+        self, ctx: Context, request: GetWeatherSummaryRequest) -> GetWeatherSummaryResponse: ...
 
     @abstractmethod
-    def get_weather_detail(self, ctx: Context, request: GetWeatherDetailRequest) -> GetWeatherDetailResponse: ...
+    async def get_weather_detail(self, ctx: Context, request: GetWeatherDetailRequest) -> GetWeatherDetailResponse: ...
 
 
 class Service(IService):
@@ -42,17 +43,17 @@ class Service(IService):
         self.models = [Nb2MosquittoModel(1)]
         self.transformer = PredictionTransformer()
 
-    def get_prediction(self, ctx: Context,  request: GetPredictionRequest) -> GetPredictionResponse:
-        data = get_prediction(ctx, self.models[0], request)
+    async def get_prediction(self, ctx: Context,  request: GetPredictionRequest) -> GetPredictionResponse:
+        data = await get_prediction(ctx, self.models[0], request)
         return self.transformer.prediction_dto_to_response(request, data)
 
-    def get_weather_summary(self, ctx: Context, request: GetWeatherSummaryRequest) -> GetWeatherSummaryResponse:
-        weather_summary_dto = asyncio.run(get_weather_summary(ctx, self.models[0],  request))
+    async def get_weather_summary(self, ctx: Context, request: GetWeatherSummaryRequest) -> GetWeatherSummaryResponse:
+        weather_summary_dto = await get_weather_summary(ctx, self.models[0],  request)
         __logger.info(weather_summary_dto)
         return self.transformer.summary_dto_to_summary_response(weather_summary_dto)
 
-    def get_weather_detail(self, ctx: Context, request: GetWeatherDetailRequest) -> GetWeatherDetailResponse:
-        weather_detail_dto = asyncio.run(get_weather_detail(ctx, self.models[0], request))
+    async def get_weather_detail(self, ctx: Context, request: GetWeatherDetailRequest) -> GetWeatherDetailResponse:
+        weather_detail_dto = await get_weather_detail(ctx, self.models[0], request)
         __logger.info(weather_detail_dto)
         return self.transformer.detail_dto_to_detail_response(weather_detail_dto)
 

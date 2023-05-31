@@ -97,13 +97,10 @@ async def predict_with_location_ids(ctx: Context, model: Nb2MosquittoModel, loca
         })
 
     # create tasks
-    task_group = []
-    for location in location_ids:
-        task_group.append(asyncio.create_task(prediction_task(location)))
+    task_group = [asyncio.create_task(prediction_task(location)) for location in location_ids]
 
     # achieve result
-    for task in task_group:
-        await task
+    await asyncio.wait(task_group)
 
     return map_location_id_to_prediction, map_location_id_to_quarttile
 
@@ -140,12 +137,9 @@ async def get_map_location_by_location_support_filter(
             map_location_id_to_third_party.update({internal_location.id: third_party_location})
             map_location_id_to_location.update({internal_location.id: internal_location})
 
-    task_group: list[asyncio.Task] = []
-    for location in inp:
-        task_group.append(asyncio.create_task(task(location)))
+    task_group: list[asyncio.Task] = [asyncio.create_task(task(location)) for location in inp]
 
-    for tsk in task_group:
-        await tsk
+    await asyncio.wait(task_group)
 
     return map_location_id_to_location, map_location_id_to_third_party
 
@@ -183,11 +177,9 @@ async def get_map_date_to_weather_log(ctx: Context, model: Nb2MosquittoModel, lo
         resp.update({time: weather_log})
 
     # construct task
-    task_group = []
-    for time in list_time:
-        task_group.append(get_log_task(time))
-    for task in task_group:
-        await task
+    task_group = [get_log_task(time) for time in list_time]
+
+    await asyncio.wait(task_group)
 
     return resp
 
@@ -205,12 +197,9 @@ async def get_map_date_to_prediction(
             location_id=location_id, date_time=time, db_session=db_session)
         map_time_to_pred.update({time: prediction.count})
         map_time_to_quartile.update({time: await get_map_date_to_quartile(ctx, prediction.count, time)})
-    group_task = []
 
-    for time in list_time:
-        group_task.append(asyncio.create_task(task(time)))
+    group_task = [asyncio.create_task(task(time)) for time in list_time]
 
-    for tsk in group_task:
-        await tsk
+    await asyncio.wait(group_task)
 
     return map_time_to_pred, map_time_to_quartile
