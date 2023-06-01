@@ -1,8 +1,4 @@
-import asyncio
-from dataclasses import dataclass
-import datetime
-import json
-import logging
+import concurrent.futures as ft
 from typing import Coroutine, Iterable, Protocol, Sequence
 import numpy as np
 from sqlalchemy.orm import Session
@@ -26,7 +22,7 @@ from app.internal.repository.third_party_location import third_party_location_re
 from app.internal.util.time_util import time_util
 
 
-async def get_map_date_to_quartile(ctx: Context, prediction: float, time: int) -> int:
+def get_map_date_to_quartile(ctx: Context, prediction: float, time: int) -> int:
     db_session = ctx.extract_db_session()
     time = time_util.to_start_date_timestamp(time)
     quartile = db_session.query(PredictionQuartile).where(PredictionQuartile.time == time).first()
@@ -54,8 +50,8 @@ class LocationFilterSupported(Protocol):
     location_code: str = None
 
 
-async def _find_location_by_long_lat(ctx: Context, location_request: LocationFilterSupported) -> tuple[Location,
-                                                                                                       ThirdPartyLocation]:
+def _find_location_by_long_lat(ctx: Context, location_request: LocationFilterSupported) -> tuple[Location,
+                                                                                                 ThirdPartyLocation]:
     db_session = ctx.extract_db_session()
 
     # find the location we are currently refer to
@@ -80,32 +76,30 @@ async def _find_location_by_long_lat(ctx: Context, location_request: LocationFil
     return location, third_party_location
 
 
-async def predict_with_location_ids(ctx: Context, model: Nb2MosquittoModel, location_ids: Iterable[int], time: int) -> tuple[dict[int, float], dict[int, int]]:
+def predict_with_location_ids(ctx: Context, model: Nb2MosquittoModel, location_ids: Iterable[int],
+                              time: int) -> tuple[dict[int, float],
+                                                  dict[int, int]]:
     db_session = ctx.extract_db_session()
     # define share resource
     map_location_id_to_prediction: dict[int, float] = {}
     map_location_id_to_quarttile: dict[int, int] = {}
-    # define tasks
 
-    async def prediction_task(location: int):
+    for location in location_ids:
         prediction = model.predict_with_location_id(
             db_session=db_session, location_id=location,
             date_time=time).count
         map_location_id_to_prediction.update({location: prediction})
         map_location_id_to_quarttile.update({
-            location: await get_map_date_to_quartile(ctx, prediction, time)
+            location:  get_map_date_to_quartile(ctx, prediction, time)
         })
-
-    # create tasks
-    task_group = [asyncio.create_task(prediction_task(location)) for location in location_ids]
+    worker_pool = ft.ThreadPoolExecutor(max_workers=10)
 
     # achieve result
-    await asyncio.wait(task_group)
 
     return map_location_id_to_prediction, map_location_id_to_quarttile
 
 
-async def get_weather_log_with_location_ids(ctx: Context, location_ids: Iterable[int]) -> dict[int, WeatherLog]:
+def get_weather_log_with_location_ids(ctx: Context, location_ids: Iterable[int]) -> dict[int, WeatherLog]:
     db_session = ctx.extract_db_session()
     weather_logs = weather_log_repo.filter_all(db_session=db_session, filter=WeatherLogFilter(
         location_ids=location_ids
@@ -114,7 +108,7 @@ async def get_weather_log_with_location_ids(ctx: Context, location_ids: Iterable
     return map_location_id_to_weather_log
 
 
-async def get_map_location_by_location_support_filter(
+def get_map_location_by_location_support_filter(
         ctx: Context, inp: Sequence[LocationFilterSupported]) -> tuple[
         dict[int, Location],
         dict[int, ThirdPartyLocation]]:
@@ -130,32 +124,29 @@ async def get_map_location_by_location_support_filter(
     map_location_id_to_location = {location.location.id: location.location for location in third_party_locations}
     location_codes = [location.location_code for location in third_party_locations]
 
-    # define tasks
-    async def task(location: LocationFilterSupported):
+    for location in inp:
         if location.location_code not in location_codes:
-            internal_location, third_party_location = await _find_location_by_long_lat(ctx, location)
+            internal_location, third_party_location = _find_location_by_long_lat(ctx, location)
             map_location_id_to_third_party.update({internal_location.id: third_party_location})
             map_location_id_to_location.update({internal_location.id: internal_location})
-
-    task_group: list[asyncio.Task] = [asyncio.create_task(task(location)) for location in inp]
-
-    await asyncio.wait(task_group)
 
     return map_location_id_to_location, map_location_id_to_third_party
 
 
-async def get_prediction_for_date(ctx: Context, model: Nb2MosquittoModel, location_id: int, date: int) -> float:
+def get_prediction_for_date(ctx: Context, model: Nb2MosquittoModel, location_id: int, date: int) -> float:
     db_session = ctx.extract_db_session()
     prediction = model.predict_with_location_id(location_id=location_id, date_time=date, db_session=db_session)
     return prediction.count
 
 
-async def get_map_date_to_weather_log(ctx: Context, model: Nb2MosquittoModel, location: Location, list_time: list[int]) -> dict[int, WeatherLog]:
+def get_map_date_to_weather_log(
+        ctx: Context, model: Nb2MosquittoModel, location: Location, list_time: list[int]) -> dict[
+        int, WeatherLog]:
     db_session = ctx.extract_db_session()
     resp: dict[int, WeatherLog] = {}
 
-    # define task
-    async def get_log_task(time: int):
+    for time in list_time:
+
         query = db_session.query(WeatherLog).where(
             WeatherLog.location_id == location.id, WeatherLog.date_time == time)
         weather_log = query.first()
@@ -176,15 +167,10 @@ async def get_map_date_to_weather_log(ctx: Context, model: Nb2MosquittoModel, lo
             weather_log_repo.save(db_session, weather_log)
         resp.update({time: weather_log})
 
-    # construct task
-    task_group = [get_log_task(time) for time in list_time]
-
-    await asyncio.wait(task_group)
-
     return resp
 
 
-async def get_map_date_to_prediction(
+def get_map_date_to_prediction(
         ctx: Context, model: Nb2MosquittoModel, location_id: int, list_time: list[int]) -> tuple[dict[
         int, float], dict[int, int]]:
     map_time_to_pred: dict[int, float] = {}
@@ -192,14 +178,9 @@ async def get_map_date_to_prediction(
     db_session = ctx.extract_db_session()
 
     # define task
-    async def task(time: int):
+    for time in list_time:
         prediction = model.predict_with_location_id(
             location_id=location_id, date_time=time, db_session=db_session)
         map_time_to_pred.update({time: prediction.count})
-        map_time_to_quartile.update({time: await get_map_date_to_quartile(ctx, prediction.count, time)})
-
-    group_task = [asyncio.create_task(task(time)) for time in list_time]
-
-    await asyncio.wait(group_task)
-
+        map_time_to_quartile.update({time: get_map_date_to_quartile(ctx, prediction.count, time)})
     return map_time_to_pred, map_time_to_quartile

@@ -23,14 +23,14 @@ __logger = logging.getLogger(__file__)
 
 class IService(Protocol):
     @abstractmethod
-    async def get_prediction(self, ctx: Context,  request: GetPredictionRequest) -> GetPredictionResponse: ...
+    def get_prediction(self, ctx: Context,  request: GetPredictionRequest) -> GetPredictionResponse: ...
 
     @abstractmethod
-    async def get_weather_summary(
+    def get_weather_summary(
         self, ctx: Context, request: GetWeatherSummaryRequest) -> GetWeatherSummaryResponse: ...
 
     @abstractmethod
-    async def get_weather_detail(self, ctx: Context, request: GetWeatherDetailRequest) -> GetWeatherDetailResponse: ...
+    def get_weather_detail(self, ctx: Context, request: GetWeatherDetailRequest) -> GetWeatherDetailResponse: ...
 
 
 class Service(IService):
@@ -43,17 +43,17 @@ class Service(IService):
         self.models = [Nb2MosquittoModel(1)]
         self.transformer = PredictionTransformer()
 
-    async def get_prediction(self, ctx: Context,  request: GetPredictionRequest) -> GetPredictionResponse:
-        data = await get_prediction(ctx, self.models[0], request)
+    def get_prediction(self, ctx: Context,  request: GetPredictionRequest) -> GetPredictionResponse:
+        data = get_prediction(ctx, self.models[0], request)
         return self.transformer.prediction_dto_to_response(request, data)
 
-    async def get_weather_summary(self, ctx: Context, request: GetWeatherSummaryRequest) -> GetWeatherSummaryResponse:
-        weather_summary_dto = await get_weather_summary(ctx, self.models[0],  request)
+    def get_weather_summary(self, ctx: Context, request: GetWeatherSummaryRequest) -> GetWeatherSummaryResponse:
+        weather_summary_dto = get_weather_summary(ctx, self.models[0],  request)
         __logger.info(weather_summary_dto)
         return self.transformer.summary_dto_to_summary_response(weather_summary_dto)
 
-    async def get_weather_detail(self, ctx: Context, request: GetWeatherDetailRequest) -> GetWeatherDetailResponse:
-        weather_detail_dto = await get_weather_detail(ctx, self.models[0], request)
+    def get_weather_detail(self, ctx: Context, request: GetWeatherDetailRequest) -> GetWeatherDetailResponse:
+        weather_detail_dto = get_weather_detail(ctx, self.models[0], request)
         __logger.info(weather_detail_dto)
         return self.transformer.detail_dto_to_detail_response(weather_detail_dto)
 
