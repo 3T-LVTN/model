@@ -18,7 +18,7 @@ from app.internal.service.summary_service import get_weather_summary,  get_weath
 from app.internal.service.transformer.prediction_transformer import PredictionTransformer
 from app.internal.repository.weather_log import weather_log_repo
 
-__logger = logging.getLogger(__file__)
+_logger = logging.getLogger()
 
 
 class IService(Protocol):
@@ -49,12 +49,14 @@ class Service(IService):
 
     def get_weather_summary(self, ctx: Context, request: GetWeatherSummaryRequest) -> GetWeatherSummaryResponse:
         weather_summary_dto = get_weather_summary(ctx, self.models[0],  request)
-        __logger.info(weather_summary_dto)
+        _logger.info(weather_summary_dto)
         return self.transformer.summary_dto_to_summary_response(weather_summary_dto)
 
     def get_weather_detail(self, ctx: Context, request: GetWeatherDetailRequest) -> GetWeatherDetailResponse:
         weather_detail_dto = get_weather_detail(ctx, self.models[0], request)
-        __logger.info(weather_detail_dto)
+        if weather_detail_dto is None:
+            return GetWeatherDetailResponse()
+        _logger.info(weather_detail_dto)
         return self.transformer.detail_dto_to_detail_response(weather_detail_dto)
 
 

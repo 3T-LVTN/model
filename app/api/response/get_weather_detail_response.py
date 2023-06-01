@@ -6,11 +6,11 @@ from app.api.response.common import Rate
 
 
 class LocationDetail(CamelModel):
-    date: int = Field(description="date of that location detail")
-    value: float
-    temperature: float
-    precip: float
-    rate: Rate
+    date: int = Field(None, description="date of that location detail")
+    value: float = None
+    temperature: float = None
+    precip: float = None
+    rate: Rate = None
 
 
 class LocationDetailGeometry(Geometry):

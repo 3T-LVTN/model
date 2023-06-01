@@ -6,13 +6,13 @@ from app.api.response.common import Rate
 
 
 class SummaryLocationInfo(CamelModel):
-    location_code: str
-    lat: float
-    lng: float
-    value: float
-    precip: float
-    temperature: float
-    rate: Rate
+    location_code: str = None
+    lat: float = None
+    lng: float = None
+    value: float = None
+    precip: float = None
+    temperature: float = None
+    rate: Rate = None
 
 
 class GetWeatherSummaryResponse(BaseResponse):

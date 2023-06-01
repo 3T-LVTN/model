@@ -16,7 +16,7 @@ from app.internal.repository.weather_log import WeatherLogFilter, weather_log_re
 from app.adapter.visual_crossing_adapter import GetWeatherLogResponseData, visual_crossing_adapter, GetWeatherRequest
 from app.internal.celery.crawl_weather_data.constants import *
 
-_logger = logging.getLogger(__name__)
+_logger = logging.getLogger()
 
 
 def gen_get_weather_request(

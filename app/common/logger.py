@@ -17,7 +17,7 @@ class Colors:
     yellow = '\033[93m'
 
 
-# __loggers_config = {
+# _loggers_config = {
 #     'version': 1,
 #     'formatters': {
 #         'verbose': {
@@ -56,7 +56,7 @@ class Colors:
 #     },
 # }
 #
-# dictConfig(__loggers_config)
+# dictConfig(_loggers_config)
 
 
 class CustomLoggerAdapter(logging.LoggerAdapter):
@@ -67,7 +67,7 @@ class CustomLoggerAdapter(logging.LoggerAdapter):
 
     def process(self, msg, kwargs):
         tag_str = ''
-        for tag in self.extra.get('tags',[]):
+        for tag in self.extra.get('tags', []):
             tag_str += f'[{tag}]'
         if kwargs.get("extra") is None:
             kwargs["extra"] = {}

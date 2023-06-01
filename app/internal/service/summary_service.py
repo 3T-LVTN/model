@@ -5,7 +5,7 @@ from dataclasses import dataclass
 import datetime
 import json
 import logging
-from typing import Coroutine, Iterable, Sequence
+from typing import Coroutine, Iterable, Optional, Sequence
 import numpy as np
 from sqlalchemy.orm import Session
 
@@ -48,10 +48,11 @@ def get_weather_summary(ctx: Context, model: Nb2MosquittoModel, request: GetWeat
 
 
 def get_weather_detail(ctx: Context, model: Nb2MosquittoModel,
-                       request: GetWeatherDetailRequest) -> WeatherDetailDTO:
+                       request: GetWeatherDetailRequest) -> Optional[WeatherDetailDTO]:
     internal_location, third_party_location = _find_location_by_long_lat(
         ctx, RequestLocation(lat=request.lat, long=request.lng))
-
+    if internal_location is None or third_party_location is None:
+        return None
     start_time_dt = time_util.ts_to_datetime(request.start_time)
     time_interval = time_util.ts_to_datetime(request.end_time) - start_time_dt
     list_time = [time_util.datetime_to_ts(start_time_dt+datetime.timedelta(i)) for i in range(time_interval.days)]

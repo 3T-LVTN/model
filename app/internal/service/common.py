@@ -53,7 +53,8 @@ class LocationFilterSupported(Protocol):
 def _find_location_by_long_lat(ctx: Context, location_request: LocationFilterSupported) -> tuple[Location,
                                                                                                  ThirdPartyLocation]:
     db_session = ctx.extract_db_session()
-
+    if location_request.lat is None or location_request.lng is None:
+        return None
     # find the location we are currently refer to
     location = location_repo.get_first(db_session=db_session, filter=LocationFilter(
         longitude=location_request.lng,
@@ -84,17 +85,18 @@ def predict_with_location_ids(ctx: Context, model: Nb2MosquittoModel, location_i
     map_location_id_to_prediction: dict[int, float] = {}
     map_location_id_to_quarttile: dict[int, int] = {}
 
-    for location in location_ids:
-        prediction = model.predict_with_location_id(
-            db_session=db_session, location_id=location,
-            date_time=time).count
-        map_location_id_to_prediction.update({location: prediction})
-        map_location_id_to_quarttile.update({
-            location:  get_map_date_to_quartile(ctx, prediction, time)
-        })
-    worker_pool = ft.ThreadPoolExecutor(max_workers=10)
-
-    # achieve result
+    with ft.ThreadPoolExecutor() as pool:
+        ft_pool = {
+            pool.submit(
+                model.predict_with_location_id, db_session=db_session, location_id=location, date_time=time): location
+            for location in location_ids}
+        for future in ft.as_completed(ft_pool.keys()):
+            location = ft_pool.get(future)
+            prediction = future.result()
+            map_location_id_to_prediction.update({location: prediction.count})
+            map_location_id_to_quarttile.update({
+                location:  get_map_date_to_quartile(ctx, prediction.count, time)
+            })
 
     return map_location_id_to_prediction, map_location_id_to_quarttile
 
@@ -127,6 +129,8 @@ def get_map_location_by_location_support_filter(
     for location in inp:
         if location.location_code not in location_codes:
             internal_location, third_party_location = _find_location_by_long_lat(ctx, location)
+            if internal_location is None or third_party_location is None:
+                continue
             map_location_id_to_third_party.update({internal_location.id: third_party_location})
             map_location_id_to_location.update({internal_location.id: internal_location})
 
