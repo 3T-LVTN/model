@@ -17,6 +17,7 @@ from app.internal.dao.location import Location
 from app.internal.dao.third_party_location import ThirdPartyLocation
 from app.internal.dao.weather_log import WeatherLog
 from app.internal.model.model.model import Nb2MosquittoModel
+from app.internal.repository.third_party_location import ThirdPartyLocationFilter, third_party_location_repo
 from app.internal.service.common import _find_location_by_long_lat, get_map_location_by_location_support_filter, get_weather_log_with_location_ids, predict_with_location_ids, get_map_date_to_prediction, get_map_date_to_weather_log
 from app.internal.service.dto.weather_detail_dto import WeatherDetailDTO
 from app.internal.service.dto.weather_summary_dto import WeatherSummaryDTO
@@ -49,10 +50,19 @@ def get_weather_summary(ctx: Context, model: Nb2MosquittoModel, request: GetWeat
 
 def get_weather_detail(ctx: Context, model: Nb2MosquittoModel,
                        request: GetWeatherDetailRequest) -> Optional[WeatherDetailDTO]:
-    internal_location, third_party_location = _find_location_by_long_lat(
-        ctx, RequestLocation(lat=request.lat, long=request.lng))
-    if internal_location is None or third_party_location is None:
-        return None
+    db_session = ctx.extract_db_session()
+    logging.info(request.json())
+    third_party_location = None
+    if request.location_code is not None:
+        third_party_location_page = third_party_location_repo.filter(db_session, ThirdPartyLocationFilter(
+            location_codes=[request.location_code]
+        ))
+        if len(third_party_location_page.content) != 0:
+            third_party_location = third_party_location_page.content[0]
+            internal_location = third_party_location.location
+    if third_party_location is None:
+        internal_location, third_party_location = _find_location_by_long_lat(
+            ctx, RequestLocation(lat=request.lat, lng=request.lng))
     start_time_dt = time_util.ts_to_datetime(request.start_time)
     time_interval = time_util.ts_to_datetime(request.end_time) - start_time_dt
     list_time = [time_util.datetime_to_ts(start_time_dt+datetime.timedelta(i)) for i in range(time_interval.days)]

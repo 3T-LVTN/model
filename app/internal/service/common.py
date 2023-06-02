@@ -1,4 +1,5 @@
 import concurrent.futures as ft
+import logging
 from typing import Coroutine, Iterable, Protocol, Sequence
 import numpy as np
 from sqlalchemy.orm import Session
@@ -52,6 +53,8 @@ class LocationFilterSupported(Protocol):
 
 def _find_location_by_long_lat(ctx: Context, location_request: LocationFilterSupported) -> tuple[Location,
                                                                                                  ThirdPartyLocation]:
+    logging.info(location_request.lat)
+    logging.info(location_request.lng)
     db_session = ctx.extract_db_session()
     if location_request.lat is None or location_request.lng is None:
         return None, None

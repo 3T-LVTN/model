@@ -38,9 +38,12 @@ class BaseRepo(Generic[ModelType]):
             page: int = DEFAULT_PAGE,
             page_size: int = DEFAULT_PAGE_SIZE,
     ) -> Page:
+
         total_items = query.with_entities(func.count()).order_by(None).scalar()
-        if page == 0:
-            page = 1
+        if not page:
+            page = DEFAULT_PAGE
+        if not page_size:
+            page_size = DEFAULT_PAGE_SIZE
         items = query.offset(page_size * (page - 1)).limit(page_size).all()
         total_pages = (total_items - 1) // page_size + 1
         return Page(
