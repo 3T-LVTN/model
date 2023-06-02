@@ -42,7 +42,8 @@ class PredictionTransformer:
 
     def summary_dto_to_summary_response(self, dto: WeatherSummaryDTO) -> GetWeatherSummaryResponse:
         resp = GetWeatherSummaryResponse()
-        logging.info("summary dto", dto)
+        logging.info("summary dto")
+        logging.info(dto.map_location_id_to_third_party)
         for id, third_party_location in dto.map_location_id_to_third_party.items():
             location_info = dto.map_location_id_to_location.get(id)
             weather_info = dto.map_location_id_to_weather_log.get(id)
@@ -64,7 +65,10 @@ class PredictionTransformer:
 
     def detail_dto_to_detail_response(self, dto: WeatherDetailDTO) -> GetWeatherDetailResponse:
         data = LocationDetailData()
-        logging.info("weather detail dto", dto)
+        logging.info("weather detail dto")
+        logging.info(dto.lat)
+        logging.info(dto.long)
+        logging.info(dto.location_code)
         data.location_geometry = LocationDetailGeometry(
             lat=dto.lat,
             lng=dto.long,
