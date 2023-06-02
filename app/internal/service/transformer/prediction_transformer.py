@@ -48,6 +48,7 @@ class PredictionTransformer:
             weather_info = dto.map_location_id_to_weather_log.get(id)
             predict = dto.map_location_id_to_prediction.get(id)
             rate = dto.map_location_id_to_quartile.get(id)
+            logging.info(MAP_IDX_TO_RATE.get(rate, Rate.NORMAL))
             summary_location_info = SummaryLocationInfo(
                 location_code=third_party_location.location_code,
                 lat=location_info.latitude,
@@ -55,7 +56,7 @@ class PredictionTransformer:
                 value=predict,
                 precip=weather_info.precipitation,
                 temperature=weather_info.temperature,
-                rate=MAP_IDX_TO_RATE.get(rate, Rate.SAFE.NORMAL),
+                rate=MAP_IDX_TO_RATE.get(rate, Rate.NORMAL),
             )
             resp.data.append(summary_location_info)
 

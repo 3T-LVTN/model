@@ -25,13 +25,6 @@ def get_application() -> FastAPI:
     app = FastAPI(docs_url="/api/prediction/docs", redoc_url="/api/prediction/redoc",
                   openapi_url="/api/prediction/openapi.json")
 
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=["*"],
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
     # add middleware to set context
     app.add_middleware(CustomContextMiddleware)
     app.include_router(router, prefix="/api")
