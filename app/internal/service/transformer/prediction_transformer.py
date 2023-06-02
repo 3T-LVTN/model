@@ -11,7 +11,7 @@ from app.internal.repository.weather_log import weather_log_repo, WeatherLogFilt
 from app.internal.service.dto.weather_detail_dto import WeatherDetailDTO
 from app.internal.service.dto.weather_summary_dto import WeatherSummaryDTO
 from app.internal.util.time_util import time_util
-from app.api.response.common import MAP_IDX_TO_RATE
+from app.api.response.common import MAP_IDX_TO_RATE, Rate
 
 
 class PredictionTransformer:
@@ -55,7 +55,7 @@ class PredictionTransformer:
                 value=predict,
                 precip=weather_info.precipitation,
                 temperature=weather_info.temperature,
-                rate=MAP_IDX_TO_RATE.get(rate),
+                rate=MAP_IDX_TO_RATE.get(rate, Rate.SAFE.NORMAL),
             )
             resp.data.append(summary_location_info)
 
