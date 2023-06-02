@@ -54,7 +54,7 @@ def _find_location_by_long_lat(ctx: Context, location_request: LocationFilterSup
                                                                                                  ThirdPartyLocation]:
     db_session = ctx.extract_db_session()
     if location_request.lat is None or location_request.lng is None:
-        return None
+        return None, None
     # find the location we are currently refer to
     location = location_repo.get_first(db_session=db_session, filter=LocationFilter(
         longitude=location_request.lng,
