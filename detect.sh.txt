@@ -1,0 +1,14 @@
+#!/bin/sh
+
+### below python to test
+# python error.py
+
+status=$?
+echo $status
+python script.py $status
+
+### uncomment below to debug local
+# function pause(){
+#    read -p "$*"
+# }
+# pause 'Press [Enter] key to continue...'

@@ -1,0 +1,38 @@
+import json
+import os
+import sys
+from typing import Optional
+from pydantic import BaseModel
+import requests
+
+
+class Payload(BaseModel):
+    text: Optional[str]
+
+
+def send_error(payload: Payload):
+    headers = {'Content-type': 'application/json'}
+    resp = requests.post(url="https://hooks.slack.com/services/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",
+                         json=json.loads(payload.json()), headers=headers)  # url thay bang webhook url cua sep
+
+    return resp
+
+
+def main(status: str):
+    status_code = 1
+    try:
+        status_code = int(status)
+    except:
+        pass
+    print(status_code)
+    if status_code != 0:
+        send_error(payload=Payload(
+            text="pull image fail"
+        ))
+
+
+if __name__ == "__main__":
+    args = sys.argv
+    print(args)
+    if len(args) >= 2:
+        main(args[1])
