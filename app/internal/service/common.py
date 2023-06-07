@@ -1,6 +1,6 @@
 import concurrent.futures as ft
 import logging
-from typing import Coroutine, Iterable, Protocol, Sequence
+from typing import Coroutine, Iterable, Optional, Protocol, Sequence
 import numpy as np
 from sqlalchemy.orm import Session
 
@@ -49,6 +49,7 @@ class LocationFilterSupported(Protocol):
     lat: float
     lng: float
     location_code: str = None
+    idx: int = None
 
 
 def _find_location_by_long_lat(ctx: Context, location_request: LocationFilterSupported) -> tuple[Location,
@@ -70,13 +71,18 @@ def _find_location_by_long_lat(ctx: Context, location_request: LocationFilterSup
             latitude=location_request.lat,
         )
         db_session.add(location)
-    # cache this location code
-    third_party_location = ThirdPartyLocation(
-        location_code=location_request.location_code,
-        location_id=location.id
-    )
-    db_session.add(third_party_location)
-    db_session.flush()
+        db_session.flush()  # flush to generate location id
+    third_party_location = None
+    if location_request.location_code is not None:
+        # cache this location code
+        third_party_location = third_party_location_repo.get_first(
+            db_session=db_session, filter=ThirdPartyLocationFilter(location_codes=[location_request.location_code]))
+        if third_party_location is None:
+            third_party_location = ThirdPartyLocation(
+                location_code=location_request.location_code,
+                location_id=location.id
+            )
+        db_session.add(third_party_location)
     return location, third_party_location
 
 
@@ -125,16 +131,20 @@ def get_map_location_by_location_support_filter(
         ))
     else:
         third_party_locations = []
-    map_location_id_to_third_party = {location.location_id: location for location in third_party_locations}
-    map_location_id_to_location = {location.location.id: location.location for location in third_party_locations}
-    location_codes = [location.location_code for location in third_party_locations]
+    map_location_id_to_third_party = {
+        location.location_id: location for location in third_party_locations if location.location_id is not None}
+    map_location_id_to_location = {
+        location.location_id: location.location for location in third_party_locations
+        if location.location_id is not None}
+    location_codes = [location.location_code for location in third_party_locations if location.location_id is not None]
 
     for location in inp:
         if location.location_code not in location_codes:
             internal_location, third_party_location = _find_location_by_long_lat(ctx, location)
-            if internal_location is None or third_party_location is None:
+            if internal_location is None:
                 continue
-            map_location_id_to_third_party.update({internal_location.id: third_party_location})
+            if third_party_location is not None:
+                map_location_id_to_third_party.update({internal_location.id: third_party_location})
             map_location_id_to_location.update({internal_location.id: internal_location})
 
     return map_location_id_to_location, map_location_id_to_third_party
