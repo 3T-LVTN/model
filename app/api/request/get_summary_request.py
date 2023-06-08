@@ -6,6 +6,7 @@ class Location(CamelModel):
     lat: float = None
     lng: float = None
     location_code: str = None
+    idx: int = None
 
 
 class GetWeatherSummaryRequest(CamelModel):

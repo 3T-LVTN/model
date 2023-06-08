@@ -6,6 +6,7 @@ from app.api.response.common import Rate
 
 
 class SummaryLocationInfo(CamelModel):
+    idx: int = None
     location_code: str = None
     lat: float = None
     lng: float = None

@@ -25,9 +25,15 @@ from app.internal.util.time_util import time_util
 
 
 def get_weather_summary(ctx: Context, model: Nb2MosquittoModel, request: GetWeatherSummaryRequest) -> WeatherSummaryDTO:
+    map_location_id_to_location: dict[int, Location] = {}
+    map_location_id_to_third_party: dict[int, ThirdPartyLocation] = {}
+    map_idx_to_location_id: dict[int, int] = {}
+    for inp in request.locations:
+        location, third_party_location = _find_location_by_long_lat(ctx, inp)
+        map_location_id_to_location.update({location.id: location})
+        map_location_id_to_third_party.update({location.id: third_party_location})
+        map_idx_to_location_id.update({inp.idx: location.id})
 
-    map_location_id_to_location, map_location_id_to_third_party = get_map_location_by_location_support_filter(
-        ctx, request.locations)
     map_location_id_to_prediction: dict[int, float] = {}
     map_location_to_quartile: dict[int, int] = {}
     map_location_id_to_weather_log: dict[int, WeatherLog] = {}
@@ -44,7 +50,8 @@ def get_weather_summary(ctx: Context, model: Nb2MosquittoModel, request: GetWeat
         map_location_id_to_prediction=map_location_id_to_prediction,
         map_location_id_to_third_party=map_location_id_to_third_party,
         map_location_id_to_location=map_location_id_to_location,
-        map_location_id_to_quartile=map_location_to_quartile
+        map_location_id_to_quartile=map_location_to_quartile,
+        map_idx_to_location_id=map_idx_to_location_id
     )
 
 
@@ -63,6 +70,7 @@ def get_weather_detail(ctx: Context, model: Nb2MosquittoModel,
     if third_party_location is None:
         internal_location, third_party_location = _find_location_by_long_lat(
             ctx, RequestLocation(lat=request.lat, lng=request.lng))
+
     start_time_dt = time_util.ts_to_datetime(request.start_time)
     time_interval = time_util.ts_to_datetime(request.end_time) - start_time_dt
     list_time = [time_util.datetime_to_ts(start_time_dt+datetime.timedelta(i)) for i in range(time_interval.days)]

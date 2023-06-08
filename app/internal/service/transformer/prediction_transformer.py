@@ -2,6 +2,7 @@
 
 import logging
 from app.api.request.get_prediction_request import GetPredictionRequest
+from app.api.request.get_summary_request import GetWeatherSummaryRequest
 from app.api.request.get_weather_detail_request import GetWeatherDetailRequest
 from app.api.response.get_prediction_response import GetPredictionResponse, PredictionData
 from app.api.response.get_summary_response import GetWeatherSummaryResponse, SummaryLocationInfo
@@ -40,27 +41,30 @@ class PredictionTransformer:
             time_lte=request.end_time,
         )
 
-    def summary_dto_to_summary_response(self, dto: WeatherSummaryDTO) -> GetWeatherSummaryResponse:
+    def summary_dto_to_summary_response(
+            self, request: GetWeatherSummaryRequest, dto: WeatherSummaryDTO) -> GetWeatherSummaryResponse:
         resp = GetWeatherSummaryResponse()
         logging.info("summary dto")
         logging.info(dto.map_location_id_to_third_party)
-        for id, third_party_location in dto.map_location_id_to_third_party.items():
-            location_info = dto.map_location_id_to_location.get(id)
-            weather_info = dto.map_location_id_to_weather_log.get(id)
-            predict = dto.map_location_id_to_prediction.get(id)
-            rate = dto.map_location_id_to_quartile.get(id)
+        for location in request.locations:
+            idx = location.idx
+            location_id = dto.map_idx_to_location_id.get(idx)
+            location_info = dto.map_location_id_to_location.get(location_id)
+            weather_info = dto.map_location_id_to_weather_log.get(location_id)
+            predict = dto.map_location_id_to_prediction.get(location_id)
+            rate = dto.map_location_id_to_quartile.get(location_id)
             logging.info(MAP_IDX_TO_RATE.get(rate, Rate.NORMAL))
             summary_location_info = SummaryLocationInfo(
-                location_code=third_party_location.location_code,
+                location_code=location.location_code,
                 lat=location_info.latitude,
                 lng=location_info.longitude,
                 value=predict,
                 precip=weather_info.precipitation,
                 temperature=weather_info.temperature,
                 rate=MAP_IDX_TO_RATE.get(rate, Rate.NORMAL),
+                idx=idx
             )
             resp.data.append(summary_location_info)
-
         return resp
 
     def detail_dto_to_detail_response(self, dto: WeatherDetailDTO) -> GetWeatherDetailResponse:
