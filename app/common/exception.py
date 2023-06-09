@@ -1,6 +1,9 @@
 
 class ThirdServiceException(Exception):
-    pass
+    code = 503
+
+    def __repr__(self) -> str:
+        return f"third party service encounter problem"
 
 
 class MissingFieldException(Exception):

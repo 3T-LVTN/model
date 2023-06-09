@@ -31,10 +31,8 @@ def get_application() -> FastAPI:
 
     # Add exception handler
     # add known exception handler in future
-    app.add_exception_handler(ThirdServiceException, lambda request, e:  JSONResponse(
-        status_code=500,
-        content=BaseResponse(code=e.code, message="another third party service, retry later or choose another location"))
-    )
+    app.add_exception_handler(ThirdServiceException, lambda request, e: JSONResponse(status_code=500, content=BaseResponse(
+        code=e.code, message="another third party service, retry later or choose another location").json()))
     paths = app.openapi().get("paths")
     for path, operations in paths.items():
         for method, metadata in operations.items():
