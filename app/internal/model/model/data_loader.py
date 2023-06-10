@@ -46,7 +46,8 @@ class WeatherDataLoader(DataLoader):
         for col in df.columns:
             if col not in NORMAL_COLUMNS:
                 continue
-            df[col] = df[col].apply(lambda x: x/np.max(df[col]) if np.max(df[col]) > 0 else 0)  # transform to 0-1 range
+            df[col] = df[col].apply(lambda x: float(x) / float(np.max(df[col]))
+                                    if float(np.max(df[col])) > 0 else 0)  # transform to 0-1 range
         return df
 
     def preprocess_predicted_var(self, db_session: Session, df: pd.DataFrame) -> pd.DataFrame:

@@ -5,18 +5,22 @@ from typing import Protocol
 from sqlalchemy.orm import Session
 
 from app.api.request.get_prediction_request import GetPredictionRequest
+from app.api.response.common import Rate
 from app.api.response.get_prediction_response import GetPredictionResponse
 from app.api.request.get_weather_detail_request import GetWeatherDetailRequest
 from app.api.response.get_weather_detail_response import GetWeatherDetailResponse
 from app.api.request.get_summary_request import GetWeatherSummaryRequest
-from app.api.response.get_summary_response import GetWeatherSummaryResponse
+from app.api.response.get_summary_response import GetHCMCProviceSummaryResponse, GetWeatherSummaryResponse, HCMCSummaryResponseData
 from app.common.context import Context
 from app.config import env_var
 from app.internal.model.model.model import Nb2MosquittoModel
+from app.internal.repository.ward import ward_repo
+from app.internal.service.common import predict_with_location_ids
 from app.internal.service.prediction_service import get_prediction
 from app.internal.service.summary_service import get_weather_summary,  get_weather_detail
 from app.internal.service.transformer.prediction_transformer import PredictionTransformer
 from app.internal.repository.weather_log import weather_log_repo
+from app.internal.util.time_util import time_util
 
 _logger = logging.getLogger()
 
@@ -31,6 +35,9 @@ class IService(Protocol):
 
     @abstractmethod
     def get_weather_detail(self, ctx: Context, request: GetWeatherDetailRequest) -> GetWeatherDetailResponse: ...
+
+    @abstractmethod
+    def get_hcmc_summary(self, ctx: Context) -> GetHCMCProviceSummaryResponse: ...
 
 
 class Service(IService):
@@ -58,6 +65,19 @@ class Service(IService):
             return GetWeatherDetailResponse()
         _logger.info(weather_detail_dto)
         return self.transformer.detail_dto_to_detail_response(weather_detail_dto)
+
+    def get_hcmc_summary(self, ctx: Context) -> GetHCMCProviceSummaryResponse:
+        db_session = ctx.extract_db_session()
+        wards = ward_repo.get_all(db_session)
+        map_location_id_to_location = {ward.location_id: ward.location for ward in wards}
+        _, map_location_to_quartile = predict_with_location_ids(
+            ctx=ctx, model=self.models[0], location_ids=list(map_location_id_to_location.keys()),
+            time=time_util.datetime_to_ts(time_util.now()))
+        return GetHCMCProviceSummaryResponse(
+            data=HCMCSummaryResponseData(
+                **
+                {val: len(list(filter(lambda x: x == idx, list(map_location_to_quartile.values()))))
+                 for idx, val in enumerate(Rate.__members__)}))
 
 
 service = Service()

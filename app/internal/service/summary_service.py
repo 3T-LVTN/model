@@ -69,7 +69,7 @@ def get_weather_detail(ctx: Context, model: Nb2MosquittoModel,
             internal_location = third_party_location.location
     if third_party_location is None:
         internal_location, third_party_location = _find_location_by_long_lat(
-            ctx, RequestLocation(lat=request.lat, lng=request.lng))
+            ctx, request)
 
     start_time_dt = time_util.ts_to_datetime(request.start_time)
     time_interval = time_util.ts_to_datetime(request.end_time) - start_time_dt

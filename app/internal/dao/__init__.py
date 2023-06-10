@@ -6,3 +6,5 @@ from app.internal.dao.predicted_log import PredictedLog
 from app.internal.dao.synced_file import SyncedFile
 from app.internal.dao.third_party_location import ThirdPartyLocation
 from app.internal.dao.prediction_quartile import PredictionQuartile
+from app.internal.dao.district import District
+from app.internal.dao.ward import Ward

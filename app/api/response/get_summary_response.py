@@ -18,3 +18,14 @@ class SummaryLocationInfo(CamelModel):
 
 class GetWeatherSummaryResponse(BaseResponse):
     data: list[SummaryLocationInfo] = Field(default_factory=list)
+
+
+class HCMCSummaryResponseData(CamelModel):
+    SAFE: int
+    NORMAL: int
+    LOW_RISK: int
+    HIGH_RISK: int
+
+
+class GetHCMCProviceSummaryResponse(BaseResponse):
+    data: HCMCSummaryResponseData = Field(description="list number of ward for each rate")
