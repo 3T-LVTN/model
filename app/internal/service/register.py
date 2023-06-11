@@ -69,15 +69,18 @@ class Service(IService):
     def get_hcmc_summary(self, ctx: Context) -> GetHCMCProviceSummaryResponse:
         db_session = ctx.extract_db_session()
         wards = ward_repo.get_all(db_session)
+
         map_location_id_to_location = {ward.location_id: ward.location for ward in wards}
         _, map_location_to_quartile = predict_with_location_ids(
             ctx=ctx, model=self.models[0], location_ids=list(map_location_id_to_location.keys()),
             time=time_util.datetime_to_ts(time_util.now()))
+        ward_rate_list = [0]*4
+        for ward in wards:
+            ward_rate_list[map_location_to_quartile.get(ward.location_id)] += 1
+
         return GetHCMCProviceSummaryResponse(
             data=HCMCSummaryResponseData(
-                **
-                {val: len(list(filter(lambda x: x == idx, list(map_location_to_quartile.values()))))
-                 for idx, val in enumerate(Rate.__members__)}))
+                **{val: ward_rate_list[idx] for idx, val in enumerate(Rate.__members__)}))
 
 
 service = Service()

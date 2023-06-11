@@ -57,14 +57,14 @@ class BaseRepo(Generic[ModelType]):
     @staticmethod
     def save(session: Session, model: ModelType) -> ModelType:
         session.add(model)
-        # session.flush()
-        # session.refresh(model)
+        session.commit()
+        session.refresh(model)
         return model
 
     @staticmethod
     def save_all(session: Session, models: List[ModelType]) -> List[ModelType]:
         session.add_all(models)
-        # session.commit()
+        session.commit()
         for model in models:
             session.refresh(model)
         return models
@@ -74,11 +74,11 @@ class BaseRepo(Generic[ModelType]):
         if model is None:
             return None
         session.delete(model)
-        # session.commit()
+        session.commit()
         return model
 
     @staticmethod
     def delete(session: Session, model: ModelType) -> ModelType:
         session.delete(model)
-        # session.commit()
+        session.commit()
         return model

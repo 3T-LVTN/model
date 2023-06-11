@@ -59,8 +59,8 @@ class PredictionTransformer:
                 lat=location_info.latitude,
                 lng=location_info.longitude,
                 value=predict,
-                precip=weather_info.precipitation,
-                temperature=weather_info.temperature,
+                precip=weather_info.precipitation if weather_info is not None else 0,
+                temperature=weather_info.temperature if weather_info is not None else 0,
                 rate=MAP_IDX_TO_RATE.get(rate, Rate.NORMAL),
                 idx=idx
             )
